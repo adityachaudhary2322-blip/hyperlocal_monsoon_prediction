@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Secrets
+.env
+
+# Data & artifacts
+data/raw/*
+data/processed/*
+models/*
+outputs/figs/*
+outputs/metrics/*
+*.zip
+*.nc
+*.grib
+*.parquet
+*.npz
+
+# OS / editors
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
+
+# Keep the directory layout in git even though its contents are ignored
+!**/.gitkeep
+
+# Track the data-quality figures: outputs/data_quality.md is committed and links
+# to them, so ignoring them would leave the report with broken images.
+!outputs/figs/*.png

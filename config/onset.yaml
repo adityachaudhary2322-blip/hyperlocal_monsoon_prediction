@@ -1,0 +1,45 @@
+# Local monsoon onset criteria. Per-zone overrides; src/ reads this and never
+# hardcodes a threshold (CLAUDE.md section 9).
+#
+# Onset is declared on the FIRST day D within the search window such that:
+#   1. rainfall accumulated over D .. D+accum_days-1  >=  accum_mm
+#   2. no "dry spell" begins in the confirm_window_days following the trigger, where a
+#      dry spell is dry_spell_days consecutive days each below dry_day_mm
+# Criterion 2 is what rejects a false start: a burst of rain followed by a long dry
+# break is not an onset.
+#
+# Zone ids are the `zone_id` values in config/zones_narp.csv. A district with no
+# sourced zone falls back to `defaults`, which is why an unzoned district still
+# produces a usable onset rather than a wrong one.
+
+defaults:
+  accum_mm: 20.0            # mm accumulated over the trigger window
+  accum_days: 3             # length of the trigger window, days
+  dry_spell_days: 7         # a run this long rejects the onset
+  dry_day_mm: 1.0           # a day below this counts as dry for the rejection test
+  confirm_window_days: 30   # look this far past the trigger for a rejecting dry spell
+  search_start: "05-15"     # earliest possible onset date (month-day)
+  search_end: "09-30"       # latest possible onset date (month-day)
+
+# Per-zone overrides. Only the keys that differ from `defaults` need to be listed.
+#
+# KNOWN PROBLEM, measured 2026-09-26: the default rule fires about a month too early
+# in zones with heavy pre-monsoon rainfall. Purnia (BI-2) gets a median detected onset
+# of 22 May against an official normal of the 3rd week of June, because a single
+# 35-40 mm Nor'wester thunderstorm day clears the 20 mm / 3 day trigger and the zone
+# then stays wet enough that no 7-day dry spell rejects it (e.g. 2018: the trigger was
+# a lone 40.5 mm day on 16 May). Gaya (BI-3), with a dry May, matches its official
+# normal closely - so this is a zone-dependent weakness, not a bug in the detector.
+#
+# Normal onset weeks quoted by the cited ICAR-CRIDA plans (see config/zones_narp.csv):
+#   BI-2  North East Alluvial Plain  3rd week of June
+#   BI-3  South Bihar Alluvial Plain 3rd week of June
+#   MP-10 Malwa Plateau              2nd week of June
+#
+# These are the calibration targets. Overrides are deliberately NOT set here yet:
+# Phase 3 must score onset skill per zone and pick thresholds against that evidence
+# rather than have a number invented to make one district look right.
+zones: {}
+
+# Per-state overrides, applied only when no zone override matches.
+states: {}

@@ -1,0 +1,40 @@
+# Agro-climatic zones (NARP) per district.
+#
+# SOURCES (cite these in any output that uses zones):
+#   [1] ICAR, National Agricultural Research Project (NARP) agro-climatic zonation of
+#       India — 127 agro-climatic zones delineated on rainfall, soil type, cropping
+#       pattern and climate. Zone codes are of the form <STATE>-<n>.
+#       https://icar.org.in/
+#   [2] Planning Commission (1989), Agro-climatic Regional Planning — the 15-region
+#       national scheme. Used only as a cross-check, NOT as the primary mapping.
+#   [3] State Agricultural Universities' zone descriptions and ICAR-CRIDA district
+#       Agriculture Contingency Plans, which list each district's NARP zone by name:
+#       https://icar-crida.res.in/  (district contingency plans)
+#
+# RULE: district -> zone assignments below must be transcribed from [1]/[3]. Do not
+# infer a district's zone from geography or from a neighbouring district. Any district
+# without a sourced assignment stays absent from `district_zone` and is reported by the
+# loader as unzoned — it is never silently defaulted.
+#
+# Zone ids are the join key used by config/onset.yaml -> zones: {}.
+
+states:
+  Uttar Pradesh:
+    zones: []          # fill from [1]/[3]
+  NCT of Delhi:
+    zones:
+      - id: NCT
+        name: NCT of Delhi
+        source: "Delhi is treated as a single zone for this project (project decision)."
+  Bihar:
+    zones: []          # fill from [1]/[3]
+  Madhya Pradesh:
+    zones: []          # fill from [1]/[3]
+  Maharashtra:
+    zones: []          # fill from [1]/[3]
+
+# district (GADM NAME_2, exact spelling as found in the shapefile) -> zone id
+district_zone:
+  # NCT of Delhi — every GADM NAME_2 in Delhi maps to the single NCT zone; the build
+  # script expands this wildcard against the actual NAME_2 values it finds.
+  "NCT of Delhi:*": NCT

@@ -1,0 +1,60 @@
+# Project-wide constants. Single source of truth for geography and time splits.
+
+# Bounding box — clip every gridded read to this FIRST (hardware constraint).
+bbox:
+  lat_min: 15.5
+  lat_max: 31.0
+  lon_min: 72.5
+  lon_max: 88.5
+
+# GADM NAME_1 values, verified against gadm41_IND_2/3.shp on 2026-09-26 — these are
+# the exact strings in the files, not assumed spellings. Re-verify if GADM is replaced.
+regions:
+  - Uttar Pradesh
+  - NCT of Delhi
+  - Bihar
+  - Madhya Pradesh
+  - Maharashtra
+
+boundaries:
+  subdistrict: data/raw/boundaries/gadm41_IND_3.shp
+  district: data/raw/boundaries/gadm41_IND_2.shp
+
+# Develop every phase on these first. Delhi only in full runs.
+#
+# `gadm_name_2` is the exact NAME_2 string in gadm41_IND_2.shp, verified 2026-09-26.
+# Only Beed differs from the common spelling: GADM writes it "Bid". Resolve pilots
+# through this table, NOT through fuzzy matching on NAME_2 alone ("Beed" fuzzy-matches
+# "Nanded" at 60), and NOT through VARNAME_2 (unreliable: the Latur row carries
+# Raigad's variants).
+pilots:
+  Uttar Pradesh:
+    - {name: Jhansi, gadm_name_2: Jhansi}
+    - {name: Gorakhpur, gadm_name_2: Gorakhpur}
+  Bihar:
+    - {name: Gaya, gadm_name_2: Gaya}
+    - {name: Purnia, gadm_name_2: Purnia}
+  Madhya Pradesh:
+    - {name: Sehore, gadm_name_2: Sehore}
+    - {name: Indore, gadm_name_2: Indore}
+  Maharashtra:
+    - {name: Latur, gadm_name_2: Latur}
+    - {name: Beed, gadm_name_2: Bid}
+
+# Time splits — no leakage. Climatology from train years only.
+splits:
+  train: [1990, 2018]
+  validate: [2019, 2021]
+  test: [2022, null]        # null = through the latest year IMD data exists
+
+climatology:
+  years: [1990, 2018]       # must equal splits.train
+
+languages:
+  Uttar Pradesh: [hi, en]
+  NCT of Delhi: [hi, en]
+  Bihar: [hi, en]
+  Madhya Pradesh: [hi, en]
+  Maharashtra: [mr, en]
+
+dtype: float32
