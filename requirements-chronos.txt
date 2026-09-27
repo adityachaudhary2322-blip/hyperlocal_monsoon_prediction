@@ -1,0 +1,37 @@
+# Optional layer: Chronos-2 on CPU inside the Space.
+#
+# Install:  pip install --no-cache-dir -r requirements-space.txt \
+#                                      -r requirements-space-chronos.txt
+#
+# ---------------------------------------------------------------------------
+# READ THIS BEFORE ADDING IT TO THE Dockerfile.
+#
+# The deployment brief allows Chronos-2 on CPU only if a pilot-district run finishes
+# inside 5 minutes. Measured 2026-09-27, CUDA disabled, 2 threads, 30 pilot units,
+# 730-day context:
+#
+#     predictor load   5 s
+#     predict          20 s   (one forecast date, 30 series, 28-day horizon)
+#     ------------------------
+#     total           25 s    against a 300 s budget
+#
+# So the time budget is not the obstacle. The obstacle is that there is nothing to
+# load: `src/stack_models.py` fits the logistic-regression stacker that converts
+# Chronos quantiles into hazard probabilities **in memory and never saves it**, so an
+# online run has no way to get from a rainfall forecast to P(dry) or P(heavy). Adding
+# these packages therefore makes the image ~2 GB larger and changes no output.
+#
+# It becomes useful once the stacker is persisted to models/ and the pipeline learns
+# to load it. Until then the app shows "Chronos-2 runs on the forecast engine" and
+# forecasts with LightGBM, which is the brief's own fallback.
+#
+# Also note, from CLAUDE.md §14: Chronos helped heavy rain (+0.031 test BSS at 7 days)
+# and hurt onset badly (-0.193 at 28 days), so even when wired up it belongs on some
+# targets and not others - `config/model_choice.yaml` records which.
+# ---------------------------------------------------------------------------
+
+# CPU-only wheels; the default index would pull the ~2.5 GB CUDA build.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+torch==2.11.0+cpu
+autogluon.timeseries==1.6.3

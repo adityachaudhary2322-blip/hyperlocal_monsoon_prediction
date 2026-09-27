@@ -1,3 +1,14 @@
+---
+title: Monsoon AI Advisory Control Panel
+emoji: "🌧"
+colorFrom: indigo
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+short_description: Probabilistic 1-4 week monsoon outlook and crop advisories
+---
+
 # Monsoon AI
 
 Probabilistic 1–4 week monsoon outlook (onset, dry spells, heavy rain) at sub-district
@@ -40,6 +51,21 @@ and fails loudly on empty output. Run them in this order:
 # Phase 2 - targets and features
 .venv\Scripts\python.exe -m src.build_features   # -> train_table.parquet (pilots only)
 
+# Phase 3 - baselines
+.venv\Scripts\python.exe -m src.train_baselines     # climatology + calibrated LightGBM
+.venv\Scripts\python.exe -m src.evaluate_baselines  # metrics.csv, figures, baseline_report.md
+
+# Phase 4 - Chronos-2 stacking hybrid
+.venv\Scripts\python.exe -m src.chronos_features    # Chronos-2 weekly quantiles (GPU)
+.venv\Scripts\python.exe -m src.stack_models        # stackers, model_comparison.md, model_choice.yaml
+
+# Phase 5 - expert system
+.venv\Scripts\python.exe -m src.advisory --demo   # worked example per state
+
+# Phase 6 - API language layer (needs SARVAM_API_KEY / GEMINI_API_KEY in .env)
+.venv\Scripts\python.exe -m src.translate_rules --language mr   # pre-translate rules.yaml
+.venv\Scripts\python.exe -m src.prewarm --languages en,hi,mr    # cache for offline demo
+
 .venv\Scripts\python.exe -m pytest -q
 ```
 
@@ -59,7 +85,121 @@ Steps are idempotent: an existing output is left alone unless you pass `--force`
 | `outputs/figs`, `outputs/metrics` | maps and scores |
 | `tests/` | pytest |
 
+`src.chronos_features` needs a GPU and downloads `autogluon/chronos-2` (~1 GB) on
+first run. It reads every parquet **before** importing AutoGluon: on this machine
+`pd.read_parquet(filters=...)` segfaults once torch is loaded.
+
 ## Data splits
 
 train 1990–2018 · validate 2019–2021 · test 2022 onward. Climatology uses training
 years only.
+
+## Deploying to Streamlit Community Cloud
+
+Entry file **`app/main.py`**. The free tier gives ~2.7 GB of RAM, no persistent disk,
+and secrets through `st.secrets`. The site serves the control panel only; the data
+pipeline and Chronos-2 stay on the laptop.
+
+### Two dependency files
+
+| File | Used by | Contains |
+|---|---|---|
+| `requirements.txt` | the website | streamlit, folium, geopandas, lightgbm, SQLAlchemy, psycopg2 — no torch, autogluon, imdlib or xarray |
+| `requirements-dev.txt` | the laptop | `-r requirements.txt` plus the research stack (CUDA torch, autogluon.timeseries, xarray, netCDF4, imdlib, cdsapi, scikit-learn, matplotlib) |
+
+`tests/test_deployment.py` fails if a package is pinned at two different versions
+across the two files, or if the website file grows a package it does not need.
+
+### What lives where
+
+| Thing | Where | Why |
+|---|---|---|
+| Forecasts, advisories, subscribers, users, audit log | Postgres via `DATABASE_URL` | the disk is wiped on every restart |
+| LightGBM boosters + isotonic breakpoints + feature rows | `app/assets/models/`, committed (4.0 MB) | Streamlit Cloud deploys from git; there is no model registry |
+| Sub-district polygons | `app/assets/map_layers_simplified.gpkg`, committed (2.1 MB) | read one state at a time |
+| Secrets | **App settings → Secrets** | see `.streamlit/secrets.toml.example` |
+
+`.gitignore` ignores `data/`, `models/`, `.venv/`, `.env` and
+`.streamlit/secrets.toml`, and re-includes `app/assets/**` — the blanket `*.parquet`
+rule would otherwise drop the committed feature table.
+
+### One-time setup
+
+```powershell
+# 1. Commit the models the site forecasts with. Isotonic calibrators are converted to
+#    JSON breakpoints, so the site needs no scikit-learn or joblib; the script asserts
+#    numpy.interp reproduces IsotonicRegression.predict exactly before writing them.
+.venv\Scripts\python.exe scripts\export_models.py
+
+# 2. Commit the simplified map layer (739 units, 2.1 MB, indexed on state).
+.venv\Scripts\python.exe scripts\build_map_assets.py
+
+# 3. Copy the local SQLite database into Postgres. --target-env names the variable, so
+#    the connection string never reaches the shell history or the process list.
+.venv\Scripts\python.exe -m src.db.migrate_to_postgres --target-env DATABASE_URL_CLOUD --reset
+```
+
+Then set `DATABASE_URL` and `HOSTED_MODE = "true"` in the app's Secrets, and point
+Streamlit Cloud at `app/main.py`.
+
+### Settings: one name, two sources
+
+`src/config.py` is the only settings lookup. Precedence is environment variable →
+`st.secrets` → `.env`, under identical names in all three, so nothing in the app
+branches on where it is running. `python -m src.config` prints which settings are
+configured and never a value.
+
+### What `HOSTED_MODE=true` changes
+
+- **Run forecast** predicts with LightGBM from `app/assets/models/`, in-process rather
+  than by forking a second Python — the free tier does not have room for two
+  interpreters each holding the boosters and the feature table.
+- Chronos-2 controls are hidden and the page states that *Chronos-2 runs on the
+  forecast engine*.
+- Everything else reads `DATABASE_URL`.
+- The Risk Map loads one state's shapes at a time, cached with `max_entries=2`.
+
+The committed and locally trained models were verified to agree **bit for bit** — 360
+probabilities on 2024-06-19, maximum difference 0.0 — so hosting does not change a
+number. `tests/test_deployment.py` re-checks that.
+
+### Writing full Chronos-2 forecasts from the laptop
+
+The website forecasts with LightGBM. To push a Chronos-2 run into the same cloud
+database, run the pipeline locally against it:
+
+```powershell
+.venv\Scripts\python.exe -m src.pipeline.run --pilot-only --as-of 2026-06-20 `
+    --db-url-env DATABASE_URL_CLOUD
+```
+
+`--db-url` takes a literal URL; `--db-url-env` takes the *name* of a variable holding
+one and is preferred, because a connection string on a command line ends up in the
+shell history and the process list.
+
+### Testing the hosted build locally
+
+```powershell
+py -3.11 -m venv .venv-site
+.venv-site\Scripts\python.exe -m pip install -r requirements.txt
+$env:HOSTED_MODE="true"
+.venv-site\Scripts\streamlit.exe run app/main.py
+```
+
+### Chronos-2 on CPU
+
+Off, and the reason is not cost. Measured 2026-09-27 with CUDA disabled on 2 threads,
+30 pilot units, 730-day context: **25 s** for one forecast date (5 s to load the
+predictor, 20 s to predict) against a 5-minute budget. What is missing is the stacker —
+`src/stack_models.py` fits the logistic regression that turns Chronos quantiles into
+hazard probabilities in memory and never saves it, so an online run has no artifact to
+load. `requirements-chronos.txt` layers CPU-only torch and `autogluon.timeseries` for
+when it is persisted.
+
+### Docker (Hugging Face Spaces)
+
+`Dockerfile` also builds this app as a Docker Space on port 7860 (`app_port` in the
+front matter above). It installs `requirements.txt`, adds `libgomp1` for LightGBM, and
+points `HF_HOME`/`MPLCONFIGDIR` at `$HOME` because only `$HOME` and `/tmp` are
+writable there. `scripts/upload_models.py` and `src/artifacts.py` are the model-repo
+path that target uses instead of committed assets.

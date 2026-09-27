@@ -231,9 +231,203 @@ onset has occurred, because there is nothing left to forecast.
 Targets: `onset_h`, `dry_h` (a >=10-day run under 2.5 mm starting in the horizon),
 `heavy_h` (any day >= 64.5 mm), `total_h`, `anomaly_h` (vs training climatology).
 
-## 13. Conventions
+## 13. Phase 3: baselines
+
+`src.train_baselines` then `src.evaluate_baselines`. Measured on test years 2022-2026,
+pilot districts only.
+
+**The headline: good ranking, poor probabilities.** AUC 0.62-0.78 everywhere, but only
+2 of 12 target/horizon pairs beat climatology on Brier Skill Score.
+
+**Calibrate on the training years, cross-fitted. Never on the validation years.**
+Fitting isotonic on 2019-2021 cost skill in 11 of 12 cases: those three years are not
+representative (dry spells 35.8% there against 53.5% in training and 47.7% in test), and
+isotonic is flexible enough to lock that base rate in. The fix is five folds **grouped
+by year** across 1990-2018, calibrating on the out-of-fold predictions.
+
+Measured effect of that one change:
+
+| | validation-fitted | cross-fitted |
+|---|---:|---:|
+| beats climatology (test) | 2/12 | **6/12** |
+| mean test BSS | -0.064 | **-0.007** |
+| validation optimism (val BSS - test BSS) | 0.190 | **0.030** |
+
+Test BSS improved in 11 of 12 and got worse in none; the biggest gains are at long
+horizons (dry_28 -0.153 -> -0.010, onset_21 -0.141 -> -0.014). All four calibrations
+(`none`, `isotonic_val`, `isotonic_cv`, `platt_cv`) stay in `predictions.parquet` so
+the choice is auditable; `--calibration` switches which feeds `p_lgbm`.
+
+**ENSO/IOD/MJO earn their keep for dry spells, not for onset.** Ablation over 3 seeds:
+dry_14 +0.027 BSS with the climate columns, onset_14 **-0.031** (overfitting on ~9.5k
+rows). `rmm2` is the single largest climate feature. SHAP alone cannot answer this -
+always ablate.
+
+Always report `n` and `n_pos` beside any metric: Purnia's `onset_7` has 11 test rows
+and Gaya's `heavy_7` has 2 events.
+
+## 14. Phase 4: Chronos-2 stacking
+
+`src.chronos_features` then `src.stack_models`. Chronos-2 forecasts daily rainfall at
+every validation/test start date (223 of them); weekly q10/q50/q90 totals for weeks 1-4
+feed a logistic regression that also takes the LightGBM log-odds.
+
+**Chronos helps heavy rain and hurts onset.** Test BSS, LightGBM -> best stack:
+heavy_7 +0.007 -> **+0.038**, heavy_14 -0.007 -> **+0.021**, heavy_28 -0.099 -> -0.049.
+Onset goes the other way: onset_28 -0.138 -> **-0.331**. That is the expected shape -
+Chronos's upper quantile is close to "will any day exceed 64.5 mm", while onset gives
+the stacker only 705 training rows for 13 features.
+
+**Fine-tuning bought almost nothing** for ~2 hours of GPU: within +/-0.03 BSS of
+zero-shot everywhere. Zero-shot first, always.
+
+**Validation-based model selection agreed with the test years in 0 of 12 cases before
+the calibration fix, 3 of 12 after.** The remaining failures are no longer LightGBM -
+they are the Chronos stackers, which are trained on the three validation years and
+scored leave-one-year-out on the same three, so their validation scores still overstate
+(dry_7: +0.092 validation, +0.014 test). Fixing that properly means cross-fitting the
+stacker over the training years too, which needs Chronos features back to 1990 (~800
+extra start dates, about an hour of GPU). Until then, trust `test_best_model` in
+`config/model_choice.yaml` over `model`.
+
+Two practical traps, both fixed in code and worth remembering:
+- **`pd.read_parquet(filters=...)` segfaults once torch is imported** (pyarrow/torch
+  native clash). Read every file before importing AutoGluon.
+- **Batch one start date per predict call.** Chronos-2's `cross_learning` predicts
+  jointly across a batch, so mixing start dates lets it see context past another item's
+  cut-off.
+
+## 15. Phase 5: expert system
+
+`config/rules.yaml` + `src/advisory.py`. Every threshold, sowing window, action text
+and tie-break is config; the module only evaluates them.
+
+**`notes_agronomy.txt` does not exist in this repo.** The Phase 5 brief told me to read
+it. Rather than invent sowing windows and irrigation triggers, the rule base is
+transcribed from the **ICAR-CRIDA district contingency plans** already cited in
+`config/zones_narp.csv`, with a `source` id on every action and every window. If the
+notes turn up, replace `rules.yaml`; no code changes.
+
+Three engine guarantees worth preserving:
+- **One field operation per advisory.** A farmer cannot irrigate and drain the same
+  plot. `tie_break.priority` picks exactly one; the loser becomes a watch note.
+- **Conflicting hazards are resolved BEFORE the action is chosen.** Detecting the
+  conflict afterwards let the engine announce "dry wins" while issuing the drainage
+  instruction. Both red -> act on the higher probability, tie goes to heavy (drainage
+  is cheap and reversible), confidence drops to low.
+- **The three sowing rules require `onset_happened == False`.** Once onset occurs the
+  onset targets go NaN or near-zero, which is indistinguishable from "monsoon still
+  late" - without the guard the engine tells a farmer with a standing crop to switch
+  variety. Unknown is not a match: it stays silent.
+
+Marathi is `None` everywhere until Phase 6 and `render("mr")` raises rather than
+falling back to English.
+
+## 16. Conventions
 
 - Configs are YAML in `config/`; code reads config, code does not embed magic numbers.
 - Long-running steps are idempotent and skip work whose output already exists, unless
   `--force`.
 - `data/raw/` is read-only once downloaded.
+
+## 17. Hosting: Streamlit Community Cloud
+
+Entry file `app/main.py`. Free tier: ~2.7 GB RAM for the whole container, no persistent
+disk, secrets through `st.secrets`. The website serves the control panel only.
+
+**Two requirements files, and they must not drift.** `requirements.txt` is the *website*
+file; `requirements-dev.txt` is the laptop and begins `-r requirements.txt`.
+`tests/test_deployment.py` fails if a package is pinned at two versions across them, if
+the website file grows `torch`/`autogluon`/`xarray`/`imdlib`/`sklearn`/`matplotlib`, or
+if an app module imports one of those at module scope.
+
+**Settings come from one lookup.** `src/config.py`: environment variable ->
+`st.secrets` -> `.env`, identical names in all three, so no code branches on where it
+runs. Touching `st.secrets` *raises* when there is no secrets file, so it is read inside
+a `try` and a missing file reads as "unset". `src.runtime.env()` delegates here;
+`src.runtime._load_env_once` is still the single dotenv entry point because the tests
+monkeypatch it. `python -m src.config` prints which settings are set, never a value.
+
+**What `HOSTED_MODE=true` changes**: models come from `app/assets/models/`, the forecast
+runs in-process instead of forking a second Python, Chronos-2 controls are hidden, and
+the Risk Map loads one state at a time.
+
+### The committed assets (`app/assets/`, ~6.1 MB, 28 files)
+
+Streamlit Cloud deploys from git and has no model registry, so whatever the site
+forecasts with has to be committed. `.gitignore` ignores `data/` and `models/` and then
+re-includes `app/assets/**` - necessary, because the blanket `*.parquet` rule would
+otherwise drop the feature table.
+
+| Asset | Built by | Size |
+|---|---|---|
+| `models/*.txt` (12 boosters) | `scripts/export_models.py` | 3.4 MB |
+| `models/*.calib.json` (12 isotonic calibrators) | same | ~30 kB |
+| `models/features.parquet` (31,050 x 33, 30 units, 1990-2026) | same | 0.5 MB |
+| `map_layers_simplified.gpkg` (739 units) | `scripts/build_map_assets.py` | 2.1 MB |
+| `pilot_units.geojson` (30 units) | same | 0.16 MB |
+
+**Calibrators are converted, never copied.** `models/lgbm/*_isotonic_cv.joblib` are
+pickled scikit-learn estimators; unpickling one needs scikit-learn *and* joblib at the
+versions that wrote it. An isotonic regression is a monotone step function, so the
+breakpoints ship as JSON and are evaluated with `numpy.interp`, which reproduces
+`IsotonicRegression.predict` **exactly** for `out_of_bounds="clip"`.
+`scripts/export_models.py` asserts that against the real estimator before writing, and
+refuses any calibrator fitted with a different `out_of_bounds`. Dropping calibration
+instead was never an option: cross-fitted isotonic is worth 0.057 mean test BSS (§13).
+
+**Committed and trained models agree bit for bit** - 360 probabilities on 2024-06-19,
+maximum difference 0.0. Re-checked by `tests/test_deployment.py`, so hosting cannot
+silently change a number.
+
+**Map layers are read one state at a time.** `gpd.read_file(..., where="state = '...'")`
+against the GeoPackage returns Bihar's 53 shapes in 0.01 s against 0.09 s for all 739 -
+11x - and `@st.cache_data(max_entries=2)` keeps at most two states alive. Geometry is
+simplified at **300 m in EPSG:6933**, not in degrees, for the same reason the weight
+matrix is (§10). `src/db/init.py` seeds from the GeoJSON, not the GeoPackage, so seeding
+needs no GDAL.
+
+### Postgres
+
+`DATABASE_URL`, normalised in `src/db/session.py` - providers hand out `postgres://`,
+which SQLAlchemy 2.x rejects. Four portability details:
+
+- `PRAGMA foreign_keys=ON` is SQLite-only and errors on Postgres, so the listener is
+  attached per dialect.
+- `pool_pre_ping=True` and `pool_recycle=280`: a sleeping container's connections die
+  quietly behind the proxy.
+- `UTCDateTime` (`src/db/models.py`) converts aware datetimes to naive UTC on bind.
+  SQLite's driver drops the offset while formatting and Postgres discards it during the
+  cast to `timestamp`; both are right only while every caller passes UTC.
+- `src/db/migrate_to_postgres.py` copies in `metadata.sorted_tables` order and then
+  **resynchronises every identity sequence** past `max(id)`. Without that the first row
+  the app inserts collides with an imported one. Verified: 1,168 rows copied to Neon,
+  6 sequences advanced, next `audit_log.id` = 4 where the import ended at 3.
+
+**Never put a connection string on a command line.** `--target-env` /`--db-url-env` take
+the *name* of a variable; a URL passed literally lands in the shell history and the
+process list. `migrate_to_postgres.scrub()` also strips the password, user and host from
+any driver error before it reaches the console.
+
+### Chronos-2 is off, and cost is not the reason
+
+Measured 2026-09-27, CUDA disabled, 2 threads, 30 pilot units, 730-day context:
+**5 s to load the predictor + 20 s to predict one start date = 25 s** against a 300 s
+budget. The blocker is that `src/stack_models.py` fits the logistic-regression stacker
+**in memory and never saves it**, so an online run has no artifact to turn Chronos
+quantiles into hazard probabilities. Until it is persisted the app says "Chronos-2 runs
+on the forecast engine" and forecasts with LightGBM. `requirements-chronos.txt` layers
+CPU-only torch and autogluon for when that changes.
+
+A full Chronos run reaches the cloud database from the laptop instead:
+`python -m src.pipeline.run --pilot-only --as-of ... --db-url-env DATABASE_URL_CLOUD`.
+
+### Also still valid: the Docker path
+
+`Dockerfile` builds the same app as a Hugging Face Docker Space on port 7860, installing
+`requirements.txt`, adding `libgomp1` (python:3.11-slim has no OpenMP runtime and
+`import lightgbm` fails without it), and pointing `HF_HOME`/`MPLCONFIGDIR` at `$HOME`
+because only `$HOME` and `/tmp` are writable there. That target uses
+`scripts/upload_models.py` + `src/artifacts.py` (a private HF model repo) instead of
+committed assets. Docker was not available on this machine, so the image is unbuilt and
+untested; the dependency set was verified in a clean venv instead.

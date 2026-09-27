@@ -1,0 +1,55 @@
+# Which advisories a human must see before they go out.
+#
+# The default is NOT "approve everything": a pipeline that queues every advisory
+# trains officers to click through without reading. Only the cases where the cost of
+# being wrong is real are held back; the rest are auto-approved and still auditable.
+
+# Any rule matching sends the advisory to pending_approval.
+hold_for_approval:
+  - id: red_risk
+    reason: "Red risk band (>60%) - highest-cost action if wrong"
+    when:
+      risk_level: red
+
+  - id: low_confidence
+    reason: >-
+      Low confidence - either the hazards conflict or the district has no sourced
+      NARP zone, so the sowing window is a fallback
+    when:
+      confidence: low
+
+  - id: heavy_rain_short_lead
+    reason: "Heavy rain within 7 days - time-critical and hard to undo"
+    when:
+      hazard: heavy
+      horizon_at_most: 7
+      risk_level_in: [amber, red]
+
+  - id: llm_text
+    reason: "Text came from a language model and has not been reviewed"
+    when:
+      source: llm
+
+  - id: flood_prep
+    reason: "Flood preparation tells people to move stored produce - never automatic"
+    when:
+      action: FLOOD_PREP
+
+# Sorted to the top of the Approval Queue.
+urgent:
+  - id: red_and_short_lead
+    when:
+      risk_level: red
+      horizon_at_most: 14
+  - id: flood
+    when:
+      action: FLOOD_PREP
+
+# Everything else is approved automatically, with this recorded as the reason.
+auto_approve_reason: >-
+  No hold rule matched: risk below the red band, confidence not low, and the text
+  came from the reviewed rule base rather than a language model.
+
+# MONITOR says "nothing is expected" - queueing it wastes reviewer attention, and
+# sending it wastes a farmer's.
+never_send_actions: [MONITOR]

@@ -1,0 +1,85 @@
+{
+  "created_by": "scripts/export_models.py",
+  "calibration": "isotonic_cv",
+  "targets": [
+    "onset",
+    "dry",
+    "heavy"
+  ],
+  "horizons": [
+    7,
+    14,
+    21,
+    28
+  ],
+  "feature_columns": [
+    "rain_prev_7",
+    "rain_prev_14",
+    "rain_prev_30",
+    "season_to_date",
+    "days_since_wet",
+    "doy_sin",
+    "doy_cos",
+    "rain_prev_7_anom",
+    "rain_prev_14_anom",
+    "rain_prev_30_anom",
+    "oni",
+    "oni_age_days",
+    "dmi",
+    "dmi_age_days",
+    "nino34",
+    "nino34_age_days",
+    "rmm1",
+    "rmm2",
+    "amplitude",
+    "mjo_age_days",
+    "mjo_phase_1",
+    "mjo_phase_2",
+    "mjo_phase_3",
+    "mjo_phase_4",
+    "mjo_phase_5",
+    "mjo_phase_6",
+    "mjo_phase_7",
+    "mjo_phase_8",
+    "centroid_lat",
+    "centroid_lon",
+    "small_unit",
+    "state",
+    "zone_id"
+  ],
+  "categorical_features": [
+    "state",
+    "zone_id"
+  ],
+  "id_columns": [
+    "unit_id",
+    "unit_name",
+    "district",
+    "state",
+    "zone_id",
+    "start_date",
+    "start_md",
+    "year"
+  ],
+  "feature_rows": 31050,
+  "start_dates": [
+    "1990-05-15",
+    "2026-09-22"
+  ],
+  "units": 30,
+  "calibrated": [
+    "onset_7",
+    "onset_14",
+    "onset_21",
+    "onset_28",
+    "dry_7",
+    "dry_14",
+    "dry_21",
+    "dry_28",
+    "heavy_7",
+    "heavy_14",
+    "heavy_21",
+    "heavy_28"
+  ],
+  "note": "Calibrators are isotonic breakpoints evaluated with numpy.interp; see scripts/export_models.py for the equivalence check."
+}

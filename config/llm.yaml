@@ -1,0 +1,143 @@
+# Language layer: provider chain, validation and cost controls.
+#
+# Nothing here holds a secret. Keys come from .env only (CLAUDE.md section 11):
+#   SARVAM_API_KEY, GEMINI_API_KEY
+# A provider with no key is skipped automatically and the chain falls through to the
+# next one, so the pipeline still works with no credentials at all.
+
+# Tried in order. TemplateProvider must stay last: it is the only one that cannot
+# fail, cannot call out, and needs no network.
+fallback_order: [sarvam, gemini, template]
+
+# Forces the template provider regardless of fallback_order. The Models page exposes
+# this as the "offline mode" switch, and it is the safe setting for a live demo.
+offline_mode: false
+
+providers:
+  sarvam:
+    enabled: true
+    api_key_env: SARVAM_API_KEY
+    # Verified against docs.sarvam.ai on 2026-09-26.
+    translate_url: "https://api.sarvam.ai/translate"
+    chat_url: "https://api.sarvam.ai/v1/chat/completions"
+    auth_header: "api-subscription-key"
+    # VERIFIED LIVE 2026-09-27: sarvam-translate:v1 accepts mode="formal" ONLY -
+    # it rejects the colloquial modes with a 400. The colloquial registers live on
+    # mayura:v1, so the model is chosen from the requested mode.
+    translate_model: "sarvam-translate:v1"     # formal only, 2000-char input limit
+    colloquial_model: "mayura:v1"              # colloquial modes, 1000-char limit
+    # sarvam-m is DEPRECATED and no longer served by this endpoint; the current
+    # chat models are sarvam-30b (64K ctx) and sarvam-105b (128K ctx).
+    chat_model: "sarvam-30b"
+    # DEFAULT IS "formal", VERIFIED LIVE 2026-09-27. The name is misleading: the
+    # colloquial modes (mayura:v1) produce urban CODE-MIXED speech, not rural
+    # vernacular, and fail the Devanagari script gate -
+    #   modern-colloquial hi: "Dry spell होने की वजह से 10 days तक sowing delay कर दीजिए।"
+    #   formal            hi: "बुवाई में 10 दिन की देरी करें क्योंकि सूखे की संभावना है।"
+    #   formal            mr: "कोरडा काळ येण्याची शक्यता असल्याने पेरणी 10 दिवसांनी उशीर करा."
+    # The formal output is the one a farmer can actually read, so it is the default.
+    default_mode: "formal"
+    colloquial_mode: "modern-colloquial"
+    formal_modes: ["formal"]
+    numerals_format: "international"   # keep digits ASCII so validation can read them
+    timeout_seconds: 30
+    max_input_chars: 2000
+    max_input_chars_colloquial: 1000
+    # Published per-character pricing is not stable enough to hardcode; this is a
+    # placeholder used only for the cost column and is labelled as an estimate.
+    estimated_cost_per_1k_chars_inr: 0.0
+  gemini:
+    enabled: true
+    api_key_env: GEMINI_API_KEY
+    model: "gemini-3.8-flash"          # alias "gemini-flash-latest" also valid
+    timeout_seconds: 30
+    # 256 was too tight: Gemini 3.x spends part of the budget on reasoning tokens
+    # and returned fragments like "बुवाई 1" for a one-sentence translation.
+    max_output_tokens: 1024
+    temperature: 0.2
+    estimated_cost_per_1k_tokens_inr: 0.0
+  template:
+    enabled: true                      # never disable: this is the floor
+
+# Applied to EVERY generation, from every provider. A failure sends the request to
+# the next provider in the chain rather than returning bad text.
+validation:
+  max_chars: 300
+  # A translation that comes back far shorter than its source has usually dropped a
+  # clause. Gemini returned "a dry spell is likely" for "Delay sowing by 10 days
+  # because a dry spell is likely" and passed every other check.
+  min_translation_length_ratio: 0.45
+  # The advisory's own action keyword must survive rephrasing, or the farmer has
+  # been told something other than what the rule engine decided.
+  require_action_keyword: true
+  # Hindi and Marathi must come back in Devanagari, not transliterated.
+  require_script:
+    hi: devanagari
+    mr: devanagari
+    en: latin
+  # The probability is the only number allowed through. Anything else is usually a
+  # hallucinated dose, date or quantity.
+  allow_only_probability_numbers: true
+  # Blocked outright: an advisory SMS must never carry a chemical dose.
+  forbidden_patterns:
+    - "(?i)\\b\\d+\\s*(ml|l|litre|liter|g|gm|gram|kg)\\b"
+    - "(?i)\\b(carbendazim|streptocycline|mancozeb|ditane|imidacloprid|chlorpyriphos|monocrotophos|glyphosate|paraquat|COC)\\b"
+    - "(?i)\\b\\d+\\s*(%|percent)\\s*(solution|spray|concentration)"
+    - "(?i)@\\s*\\d"
+  forbidden_reason: >-
+    Pesticide and fertiliser doses must come from an agronomist through the rule
+    base, never from a language model.
+
+# Identical requests are answered from SQLite instead of the API. Probabilities are
+# bucketed so that 0.71 and 0.73 share one cache entry rather than causing two calls.
+cache:
+  enabled: true
+  path: "data/processed/llm_cache.sqlite"
+  probability_bucket: 0.05
+  ttl_days: 90
+
+# 429 handling and retry policy.
+rate_limit:
+  max_attempts: 4
+  backoff_seconds: [2, 8, 30]
+  jitter: 0.25
+  # Stop calling out entirely once a day's spend passes this. 0 disables the guard.
+  daily_call_budget: 2000
+
+privacy:
+  # Only these fields may ever be sent to a provider. Anything else in an advisory
+  # payload is dropped before the request is built, and a phone-number-shaped string
+  # anywhere in the payload aborts the call.
+  allowed_fields:
+    - template_text
+    - unit_name
+    - district
+    - state
+    - crop
+    - crops
+    - action
+    - action_keyword
+    - probability
+    - probability_phrase
+    - horizon_days
+    - risk_level
+    - stage
+    - language
+  forbidden_patterns:
+    - name: phone_number
+      # Separators may sit anywhere inside the number: "+91 98123 45678",
+      # "98123-45678" and "9812345678" are the same subscriber.
+      pattern: "(?:(?:\\+|00)?\\s?91[\\s-]*)?[6-9](?:[\\s-]?\\d){9}"
+    - name: whatsapp_address
+      pattern: "(?i)whatsapp:\\+?\\d+"
+    - name: email
+      pattern: "[\\w.+-]+@[\\w-]+\\.[\\w.]+"
+    - name: aadhaar
+      pattern: "\\b\\d{4}\\s?\\d{4}\\s?\\d{4}\\b"
+
+# Every generated string is provisional. The control panel must not send text with
+# source=llm without a human approving it first.
+governance:
+  llm_output_requires_approval: true
+  template_output_requires_approval: false
+  audit_provider_order_changes: true

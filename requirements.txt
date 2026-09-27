@@ -1,46 +1,52 @@
-# Monsoon AI — pinned stack. Python 3.11, Windows, RTX 4050 (sm_89), CUDA 12.8.
-# Install:  .venv\Scripts\python.exe -m pip install -r requirements.txt
+# Monsoon AI - WEBSITE dependencies only. This is what Streamlit Community Cloud
+# installs (free tier: ~2.7 GB RAM, no persistent disk, secrets via st.secrets).
 #
-# Version envelope is set by autogluon.timeseries 1.6.3 (Chronos-2), which requires
-# torch>=2.10,<2.14, numpy<2.6, scipy<1.19, pandas<2.4, matplotlib<3.12,
-# scikit-learn<1.10, lightgbm<4.8. Do not bump a pin without re-checking that set.
+# The laptop file is requirements-dev.txt; it starts with `-r requirements.txt` and
+# adds the research stack on top, so a development install still gets one environment.
+#
+# Deliberately absent - none of it is reachable from the running website:
+#   torch, autogluon.timeseries   Chronos-2 runs on the laptop and writes its forecasts
+#                                 to the cloud database (src/pipeline/run.py --db-url)
+#   xarray, netCDF4, imdlib,      the gridded pipeline is offline; the website reads
+#   cdsapi                        its outputs from Postgres
+#   scikit-learn, joblib          the isotonic calibrators are exported to plain JSON
+#                                 (app/assets/models/*.calib.json) and interpolated
+#                                 with numpy, so nothing unpickles an estimator
+#   matplotlib                    the Risk Map colours its own table cells in CSS
+#
+# Pins match the versions the app was verified against on the laptop.
 
---extra-index-url https://download.pytorch.org/whl/cu128
+# --- web app ------------------------------------------------------------------
+streamlit==1.64.0
+streamlit-folium==0.27.4
+folium==0.20.0
 
-# --- deep learning (CUDA 12.8 build) -----------------------------------------
-torch==2.11.0+cu128
-
-# --- numerics / IO ------------------------------------------------------------
-numpy==2.4.6            # 2.5.x requires Python >=3.12
-pandas==2.3.3
-pyarrow==24.0.0          # autogluon-common requires >=23.0.1,<25
-scipy==1.17.1           # 1.18.x requires Python >=3.12
-
-# --- gridded climate data -----------------------------------------------------
-xarray==2026.7.0
-netCDF4==1.7.4
-imdlib==0.1.22
-cdsapi==0.7.7
-
-# --- geospatial ---------------------------------------------------------------
+# --- geospatial (map layers) --------------------------------------------------
+# Reads app/assets/map_layers_simplified.gpkg, one state at a time.
 geopandas==1.1.4
 shapely==2.1.2
 
-# --- modeling -----------------------------------------------------------------
-lightgbm==4.7.0
-scikit-learn==1.9.1
-autogluon.timeseries==1.6.3
+# --- data ---------------------------------------------------------------------
+pandas==2.3.3
+pyarrow==24.0.0
+numpy==2.4.6             # pinned explicitly: the calibrators interpolate with it
 
-# --- viz / app ----------------------------------------------------------------
-matplotlib==3.11.2
-folium==0.20.0
-streamlit==1.64.0
-streamlit-folium==0.27.4
+# --- inference ----------------------------------------------------------------
+lightgbm==4.7.0          # pure C++; needs libgomp1 on a slim Linux image
+
+# --- database -----------------------------------------------------------------
+SQLAlchemy==2.1.1
+psycopg2-binary==2.9.10  # DATABASE_URL; `postgres://` is normalised in db/session.py
+
+# --- language layer and delivery ----------------------------------------------
+requests==2.34.2         # Sarvam provider
+google-genai==2.25.0     # Gemini provider
+twilio==9.11.1           # WhatsApp sandbox; unused while MOCK_MODE is on
 
 # --- infra --------------------------------------------------------------------
-pypdf==6.1.3            # reads the ICAR-CRIDA zone PDFs in src/build_zones.py
 python-dotenv==1.2.3
-twilio==9.11.1
 PyYAML==6.0.3
-rapidfuzz==3.14.6
-pytest==9.1.1
+# Not in the brief's list, but the login form verifies bcrypt hashes from the users
+# table, so the site cannot authenticate anyone without it. streamlit-authenticator
+# is NOT included: app/common.py implements the session and scope logic directly.
+bcrypt==5.0.0

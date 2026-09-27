@@ -1,0 +1,141 @@
+# Best model per target x horizon, chosen on VALIDATION years (2019-2021).
+# Written by `python -m src.stack_models`. Do not hand-edit: rerun instead.
+#
+# =====================================================================
+# READ THIS BEFORE USING `model`.
+# Validation-based selection agreed with the test years in 3 of
+# 12 cases. `model` is recorded because the spec asks for it, but on
+# this data it is NOT a reliable way to pick a model. `test_best_model`
+# below is the better guide.
+#
+# The reason is measurable: LightGBM's validation score is inflated because
+# Phase 3 fitted its early stopping AND its isotonic calibrator on exactly
+# these years. For dry_28 it scores +0.213 on validation and -0.153 on
+# test - a 0.37 BSS swing that is an artefact of the split, not skill.
+#
+# Climatology is the only model whose validation score is clean (fitted on
+# 1990-2018 only). The Chronos stackers are scored leave-one-year-out
+# across 2019-2021, since they are trained on those years.
+# =====================================================================
+chosen:
+  onset:
+    h7:
+      model: lightgbm
+      validation_bss: 0.0297
+      validation_n: 705
+      validation_events: 124
+      caveat: 'LightGBM''s validation score is optimistic: Phase 3 used these same
+        years for early stopping and isotonic calibration.'
+      test_bss_of_chosen: 0.0315
+      test_best_model: lightgbm
+      test_best_bss: 0.0315
+      selection_agreed_with_test: true
+    h14:
+      model: climatology
+      validation_bss: 0.0
+      validation_n: 705
+      validation_events: 248
+      test_bss_of_chosen: 0.0
+      test_best_model: lightgbm
+      test_best_bss: 0.0008
+      selection_agreed_with_test: false
+    h21:
+      model: climatology
+      validation_bss: 0.0
+      validation_n: 705
+      validation_events: 352
+      test_bss_of_chosen: 0.0
+      test_best_model: climatology
+      test_best_bss: 0.0
+      selection_agreed_with_test: true
+    h28:
+      model: climatology
+      validation_bss: 0.0
+      validation_n: 705
+      validation_events: 424
+      test_bss_of_chosen: 0.0
+      test_best_model: climatology
+      test_best_bss: 0.0
+      selection_agreed_with_test: true
+  dry:
+    h7:
+      model: chronos_finetuned_stack
+      validation_bss: 0.0919
+      validation_n: 2520
+      validation_events: 428
+      test_bss_of_chosen: 0.0142
+      test_best_model: lightgbm
+      test_best_bss: 0.0319
+      selection_agreed_with_test: false
+    h14:
+      model: chronos_finetuned_stack
+      validation_bss: 0.0678
+      validation_n: 2520
+      validation_events: 573
+      test_bss_of_chosen: -0.0294
+      test_best_model: lightgbm
+      test_best_bss: 0.0188
+      selection_agreed_with_test: false
+    h21:
+      model: chronos_finetuned_stack
+      validation_bss: 0.0408
+      validation_n: 2520
+      validation_events: 722
+      test_bss_of_chosen: -0.1118
+      test_best_model: lightgbm
+      test_best_bss: 0.0044
+      selection_agreed_with_test: false
+    h28:
+      model: chronos_zeroshot_stack
+      validation_bss: 0.0267
+      validation_n: 2520
+      validation_events: 901
+      test_bss_of_chosen: -0.1276
+      test_best_model: climatology
+      test_best_bss: 0.0
+      selection_agreed_with_test: false
+  heavy:
+    h7:
+      model: lightgbm
+      validation_bss: 0.0178
+      validation_n: 2520
+      validation_events: 124
+      caveat: 'LightGBM''s validation score is optimistic: Phase 3 used these same
+        years for early stopping and isotonic calibration.'
+      test_bss_of_chosen: 0.0197
+      test_best_model: chronos_zeroshot_stack
+      test_best_bss: 0.043
+      selection_agreed_with_test: false
+    h14:
+      model: lightgbm
+      validation_bss: 0.0268
+      validation_n: 2520
+      validation_events: 214
+      caveat: 'LightGBM''s validation score is optimistic: Phase 3 used these same
+        years for early stopping and isotonic calibration.'
+      test_bss_of_chosen: -0.0072
+      test_best_model: chronos_finetuned_stack
+      test_best_bss: 0.0197
+      selection_agreed_with_test: false
+    h21:
+      model: lightgbm
+      validation_bss: 0.0432
+      validation_n: 2520
+      validation_events: 306
+      caveat: 'LightGBM''s validation score is optimistic: Phase 3 used these same
+        years for early stopping and isotonic calibration.'
+      test_bss_of_chosen: -0.0327
+      test_best_model: chronos_finetuned_stack
+      test_best_bss: 0.0137
+      selection_agreed_with_test: false
+    h28:
+      model: lightgbm
+      validation_bss: 0.0284
+      validation_n: 2520
+      validation_events: 398
+      caveat: 'LightGBM''s validation score is optimistic: Phase 3 used these same
+        years for early stopping and isotonic calibration.'
+      test_bss_of_chosen: -0.0531
+      test_best_model: climatology
+      test_best_bss: 0.0
+      selection_agreed_with_test: false

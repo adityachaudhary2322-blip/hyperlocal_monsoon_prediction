@@ -8,11 +8,24 @@ __pycache__/
 
 # Secrets
 .env
+.streamlit/secrets.toml
 
-# Data & artifacts
+# Data & artifacts. Everything here is regenerable by the pipeline, and none of it is
+# needed by the deployed website - the site reads Postgres plus app/assets/.
+#
+# Written as `data/*` and not `data/`: git cannot re-include a file once a parent
+# DIRECTORY has been excluded, so the blanket form would silently drop SOURCES.md and
+# the .gitkeep files no matter what negations followed.
+data/*
+!data/SOURCES.md
+!data/raw/
+!data/processed/
 data/raw/*
 data/processed/*
 models/*
+# AutoGluon writes here when no path is given; these are scratch predictors from the
+# Chronos-2 runs, not artifacts anything loads.
+AutogluonModels/
 outputs/figs/*
 outputs/metrics/*
 *.zip
@@ -30,6 +43,16 @@ Thumbs.db
 # Keep the directory layout in git even though its contents are ignored
 !**/.gitkeep
 
-# Track the data-quality figures: outputs/data_quality.md is committed and links
-# to them, so ignoring them would leave the report with broken images.
+# app/assets/ IS committed - it is what the hosted site runs on. The LightGBM
+# boosters, the isotonic breakpoints, the feature table and the simplified map layer
+# together are ~6 MB, and Streamlit Community Cloud deploys from the repo, so they
+# cannot live in data/ or models/. The rules above would otherwise catch
+# features.parquet via *.parquet.
+!app/assets/
+!app/assets/**
+
+# Track the report figures and metrics: outputs/*.md are committed and link to
+# them, so ignoring them would leave the reports with broken links. Trained models
+# stay out - they are large and regenerable from the pipeline.
 !outputs/figs/*.png
+!outputs/metrics/*.csv

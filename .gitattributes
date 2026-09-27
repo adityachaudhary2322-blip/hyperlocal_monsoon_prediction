@@ -1,0 +1,16 @@
+# Model assets must be byte-identical on every platform.
+#
+# The LightGBM boosters are .txt, so git's autocrlf would check them out with CRLF on
+# Windows and LF on Linux. The hosted site runs on Linux and the models are trained on
+# Windows, and a forecast must not depend on which one wrote the file - so line-ending
+# translation is switched off for them rather than trusting every parser in the chain
+# to normalise.
+app/assets/models/*.txt -text
+app/assets/models/*.json -text
+
+# Binary assets: never diffed, never translated.
+*.gpkg binary
+*.parquet binary
+*.npz binary
+*.nc binary
+*.grd binary

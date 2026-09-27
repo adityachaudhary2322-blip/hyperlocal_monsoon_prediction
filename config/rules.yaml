@@ -1,0 +1,494 @@
+# Rule-based crop advisory. Read by src/advisory.py; no threshold is hardcoded there.
+#
+# PROVENANCE OF THE MARATHI (`mr:`) AND THE HINDI CROP NAMES
+# These were produced by sarvamai/sarvam-translate running LOCALLY in 4-bit, in the
+# first pass of Phase 6, from the English source (that checkpoint supports
+# English<->Indic only, so Hindi->Marathi would be an unsupported pivot). Phase 6 was
+# then revised to an API-only language layer and the local loading code was deleted.
+# The text is the same model family the Sarvam API serves, but it has NOT been
+# regenerated through the API and has NOT been reviewed by a Marathi speaker.
+# Re-run it through the provider chain once SARVAM_API_KEY is set, and treat the
+# current strings as provisional until then. Side-by-side review copy:
+# outputs/marathi_review.md
+#
+# MARATHI STATUS: the first (local) translation pass DROPPED the {crops} placeholder
+# from 6 of 7 action texts, so those messages would never have named the crop, and
+# FLOOD_PREP came back 307 characters against a 300-character SMS limit. Those texts
+# are reverted to null rather than shipped. `crop_names` below survived intact (single
+# words, no placeholder) and is kept. Re-run `python -m src.translate_rules` once
+# SARVAM_API_KEY is set: it protects the placeholder with a sentinel the translator
+# will not touch, and re-validates length before writing.
+#
+# PROVENANCE. `notes_agronomy.txt` referenced in the Phase 5 brief does not exist in
+# this repository, so every agronomic statement below is instead transcribed from the
+# ICAR-CRIDA District Agriculture Contingency Plan for the relevant pilot zone - the
+# same documents that source config/zones_narp.csv, and the closest thing to an
+# official contingency rule book for these districts. Each action and sowing window
+# carries a `source` id resolving to the `sources` block. Anything that could not be
+# sourced is marked `confidence: low` and says so in `source_note`.
+#
+# Replace or extend this file when the agronomy notes arrive; src/advisory.py reads
+# it wholesale and needs no change.
+
+meta:
+  version: 1
+  retrieved: "2026-09-26"
+  scope: >-
+    Pilot districts only (Jhansi, Gorakhpur, Gaya, Purnia, Sehore, Indore, Latur,
+    Bid). Rules are written per NARP zone; a district with no sourced zone falls
+    back to `default_zone` and every action it produces is downgraded to low
+    confidence.
+  default_zone: DEFAULT
+
+sources:
+  crida_up_gorakhpur:
+    title: "ICAR-CRIDA Agriculture Contingency Plan, Gorakhpur (UP-8)"
+    url: "https://www.icar-crida.res.in/CP/Uttar_Pradesh/UP13-Gorakhpur-28.08.12.pdf"
+  crida_up_chitrakoot:
+    title: "ICAR-CRIDA Agriculture Contingency Plan, Chitrakoot (UP-10 Bundelkhand)"
+    url: "https://www.icar-crida.res.in/CP/Uttar_Pradesh/UP38-Chitrakut%20draft%20plan-10.07.14.pdf"
+  crida_br_gaya:
+    title: "ICAR-CRIDA Agriculture Contingency Plan, Gaya (BI-3)"
+    url: "https://www.icar-crida.res.in/CP/Bihar/BR17_Gaya%20_28.12.2013.pdf"
+  crida_br_purnea:
+    title: "ICAR-CRIDA Agriculture Contingency Plan, Purnea (BI-2)"
+    url: "https://www.icar-crida.res.in/CP/Bihar/BR28_Purnea_28.12.2013.pdf"
+  crida_mp_sehore:
+    title: "ICAR-CRIDA Agriculture Contingency Plan, Sehore (MP-10/MP-5)"
+    url: "https://www.icar-crida.res.in/CP/madhya%20pradesh/MP16-Sehore-26.6.2012.pdf"
+  crida_mp_indore:
+    title: "ICAR-CRIDA Agriculture Contingency Plan, Indore (MP-10)"
+    url: "https://www.icar-crida.res.in/CP/madhya%20pradesh/MP24-Indore-31.12.2012.pdf"
+  crida_mh_beed:
+    title: "ICAR-CRIDA Agriculture Contingency Plan, Beed (MH-6/MH-7)"
+    url: "https://www.icar-crida.res.in/CP/Maharastra/MAU%2C%20Parbhani/Maharashtra%2027-Beed-3%201-12-2011.pdf"
+  imd_heavy:
+    title: "IMD rainfall classification: heavy rainfall >= 64.5 mm in 24 h"
+    url: "https://mausam.imd.gov.in/"
+  project:
+    title: "Project decision, documented in CLAUDE.md"
+    url: ""
+
+# Risk bands, exactly as specified in the Phase 5 brief.
+risk_bands:
+  green: {below: 0.30}
+  amber: {from: 0.30, to: 0.60}
+  red: {above: 0.60}
+
+# Crops carried per state.
+crops:
+  Uttar Pradesh: [paddy, maize, bajra, urad, moong, arhar, til, groundnut, sugarcane]
+  NCT of Delhi: [paddy, maize, bajra, urad, moong, arhar, til, groundnut, sugarcane]
+  Bihar: [paddy, maize, arhar]
+  Madhya Pradesh: [soybean, maize, urad, paddy]
+  Maharashtra: [soybean, cotton, tur, jowar, bajra, moong]
+
+# Crops that only apply in some zones. Groundnut is a Bundelkhand crop; advising it
+# in the eastern UP plains would be wrong.
+crop_zone_restrictions:
+  groundnut: [UP-10]
+
+# An SMS is capped at 300 characters, and Uttar Pradesh carries nine crops - naming
+# them all costs 66 characters and is unreadable anyway. Name the first few and say
+# "etc"; the full list stays in the advisory object for the app to show.
+max_crops_in_text: 3
+crops_etc:
+  en: "etc"
+  hi: "आदि"
+  mr: null
+
+# Stage boundaries, counted from the close of the zone's sowing window.
+# A farmer who sowed on the last valid day is the one most at risk, so the stages are
+# anchored to the window end rather than its start.
+stage_offsets_days:
+  early_vegetative_until: 45
+  flowering_until: 90
+
+# Sowing windows per NARP zone, transcribed from section 1.12 of each plan, with the
+# zone's normal monsoon onset from section 1.2.
+sowing_windows:
+  UP-8:
+    normal_onset: "3rd week of June"
+    default: {start: "06-15", end: "07-15"}
+    source: crida_up_gorakhpur
+    source_note: >-
+      Plan 1.2 gives normal onset as the 3rd week of June; its section 1.12 table did
+      not extract cleanly, so the window is the zone onset +/- the usual kharif
+      fortnight rather than a quoted table. Confidence medium for this reason.
+    confidence: medium
+  UP-10:
+    normal_onset: "2nd week of June"
+    default: {start: "06-15", end: "07-15"}
+    crops:
+      til: {start: "07-01", end: "07-31"}
+      arhar: {start: "07-01", end: "07-31"}
+      urad: {start: "06-15", end: "07-31"}
+      moong: {start: "06-15", end: "07-31"}
+      bajra: {start: "06-15", end: "07-31"}
+    source: crida_up_chitrakoot
+    source_note: >-
+      1.12 "Sowing window for 5 major field crops": Sesame July; Jowar June-July;
+      Bajra June-July; Black Gram April, June-July; Green gram June-July;
+      Pigeon Pea July.
+    confidence: high
+  BI-3:
+    normal_onset: "3rd week of June"
+    default: {start: "05-25", end: "06-30"}
+    crops:
+      paddy: {start: "05-25", end: "06-30"}
+      maize: {start: "05-25", end: "06-30"}
+    source: crida_br_gaya
+    source_note: >-
+      1.12: Rice and Maize, kharif-irrigated, 4th week of May to 4th week of June.
+    confidence: high
+  BI-2:
+    normal_onset: "3rd week of June"
+    default: {start: "05-15", end: "06-30"}
+    crops:
+      paddy: {start: "05-15", end: "06-30"}
+      maize: {start: "05-15", end: "06-30"}
+      arhar: {start: "07-01", end: "08-31"}
+    source: crida_br_purnea
+    source_note: >-
+      1.12: Rice and Maize kharif May-June; pulses kharif-irrigated July-August.
+    confidence: high
+  MP-10:
+    normal_onset: "2nd week of June"
+    default: {start: "06-15", end: "07-07"}
+    crops:
+      soybean: {start: "06-15", end: "07-07"}
+      maize: {start: "06-15", end: "06-30"}
+      urad: {start: "06-15", end: "07-15"}
+      paddy: {start: "06-15", end: "07-07"}
+    source: crida_mp_sehore
+    source_note: >-
+      1.12: Soybean 15 June to 7 July; Sorghum/Maize 15 June to 30 June;
+      Tur 15 June to 15 July. Indore's plan (MP-10) is consistent.
+    confidence: high
+  MP-10/MP-5:
+    normal_onset: "2nd week of June"
+    default: {start: "06-15", end: "07-07"}
+    crops:
+      soybean: {start: "06-15", end: "07-07"}
+      maize: {start: "06-15", end: "06-30"}
+      urad: {start: "06-15", end: "07-15"}
+      paddy: {start: "06-15", end: "07-07"}
+    source: crida_mp_sehore
+    source_note: "As MP-10; Sehore straddles MP-10 (46%) and MP-5 (42%)."
+    confidence: high
+  MH-6/MH-7:
+    normal_onset: "2nd week of June"
+    default: {start: "06-15", end: "07-15"}
+    crops:
+      cotton: {start: "06-15", end: "07-15"}
+      jowar: {start: "06-15", end: "07-15"}
+      soybean: {start: "06-15", end: "07-15"}
+      bajra: {start: "06-15", end: "07-30"}
+      tur: {start: "06-15", end: "07-30"}
+      moong: {start: "06-15", end: "07-15"}
+    source: crida_mh_beed
+    source_note: >-
+      1.12: Cotton/Sorghum/Soybean 15 June to 15 July; Bajra/Pigeonpea 15 June to
+      30 July.
+    confidence: high
+  DEFAULT:
+    normal_onset: "unknown"
+    default: {start: "06-15", end: "07-15"}
+    source: project
+    source_note: >-
+      Fallback for a district with no sourced NARP zone (149 of 201 districts).
+      Every advisory built on it is downgraded to low confidence.
+    confidence: low
+
+# Action catalogue. `field_operation` is what the farmer would physically do; two
+# actions with opposing operations must never be issued together (see tie_break).
+actions:
+  SOW_NOW:
+    # Words that must survive rephrasing, per language.
+    keywords:
+      en: sow
+      hi: [बुवाई, बुआई, पेरणी]
+      mr: पेरणी
+    field_operation: sow
+    category: onset
+    confidence: high
+    source: crida_mp_sehore
+    source_note: >-
+      "No change in normal package of practices" for an on-time monsoon; sowing at
+      the zone's normal window is the plans' base case.
+    en: >-
+      Monsoon rain is likely to arrive within the next week. If your field is ready,
+      sow {crops} now using your normal variety and spacing. Keep seed and fertiliser
+      ready before the rain starts.
+    hi: >-
+      अगले एक सप्ताह में मानसून की बारिश आने की संभावना है। यदि खेत तैयार है तो
+      {crops} की बुवाई अभी सामान्य किस्म और दूरी से करें। बारिश शुरू होने से पहले
+      बीज और खाद तैयार रखें।
+    mr: null
+  DELAY_SOWING_10D:
+    # Words that must survive rephrasing, per language.
+    keywords:
+      en: sowing
+      hi: [बुवाई, बुआई]
+      mr: पेरणी
+    field_operation: wait
+    category: onset
+    confidence: high
+    source: crida_br_gaya
+    source_note: >-
+      "Early season drought (delayed onset), Delay by 2 weeks" - the plans keep the
+      normal crop and package but defer sowing; dry sowing before a confirmed onset
+      risks a failed germination and a second seed cost.
+    en: >-
+      Monsoon rain is unlikely in the next two weeks. Hold back sowing of {crops} for
+      about 10 days and do not dry-sow. Use the time for field preparation, and keep
+      the seed dry and ready.
+    hi: >-
+      अगले दो सप्ताह में मानसून की बारिश की संभावना कम है। {crops} की बुवाई लगभग
+      10 दिन रोक दें और सूखी बुवाई न करें। इस समय का उपयोग खेत की तैयारी में करें,
+      और बीज सूखा और तैयार रखें।
+    mr: null
+  SWITCH_SHORT_DURATION:
+    # Words that must survive rephrasing, per language.
+    keywords:
+      en: variety
+      hi: किस्म
+      mr: null
+    field_operation: sow
+    category: onset
+    confidence: high
+    source: crida_mh_beed
+    source_note: >-
+      "Delay by 4 weeks ... Prefer varieties like ICTP-8203, GHB 558, AIMP-92901,
+      seed treatment"; Gaya's plan likewise moves to medium-duration rice and
+      staggered community nursery once onset is late.
+    en: >-
+      The sowing window for {crops} has passed and the monsoon is still late. Switch
+      to a short-duration variety recommended by your KVK, treat the seed before
+      sowing, and sow as soon as there is enough soil moisture.
+    hi: >-
+      {crops} की बुवाई का समय निकल चुका है और मानसून अभी भी देर से है। अपने कृषि
+      विज्ञान केंद्र द्वारा सुझाई गई कम अवधि की किस्म चुनें, बुवाई से पहले बीज
+      उपचार करें, और खेत में पर्याप्त नमी होते ही बुवाई करें।
+    mr: '{crops} पेरणीची वेळ निघून गेली आहे आणि अजूनही पावसाळा उशिरा आहे. तुमच्या के.व्ही.के.ने सुचविलेल्या अल्प-अवधीच्या वाणावर स्विच करा, पेरणीपूर्वी बियाण्यावर उपचार करा आणि जमिनीत पुरेसा ओलावा आल्यावर पेरणी करा.'
+  LIFE_SAVING_IRRIGATION_MULCH:
+    # Words that must survive rephrasing, per language.
+    keywords:
+      en: irrigation
+      hi: सिंचाई
+      mr: null
+    field_operation: irrigate
+    category: dry
+    confidence: high
+    source: crida_mh_beed
+    source_note: >-
+      Mid-season drought (long dry spell, consecutive 2 weeks rainless >2.5 mm):
+      "Avoid top dressing of fertilizers till sufficient soil moisture is available",
+      "Interculture with harrow for weeding and to create soil mulch", "Give
+      protective irrigation if possible", "Mulching with crop residue @ 3-5 t/ha
+      within the rows", "Spraying of 2% urea or DAP". The project's dry-spell target
+      (>=10 consecutive days under 2.5 mm) matches this plan's own definition.
+    en: >-
+      A long dry spell is likely in the coming weeks. If water is available, give
+      {crops} one life-saving irrigation. Spread crop residue as mulch between the
+      rows and hold back top-dressing of fertiliser until the soil has moisture
+      again.
+    hi: >-
+      आने वाले हफ्तों में लंबा सूखा पड़ने की संभावना है। यदि पानी उपलब्ध हो तो
+      {crops} को एक जीवनरक्षक सिंचाई दें। कतारों के बीच फसल अवशेष की पलवार बिछाएँ,
+      और मिट्टी में नमी लौटने तक ऊपरी खाद डालना रोक दें।
+    mr: null
+  DRAINAGE_POSTPONE_FERTILIZER_SPRAY:
+    # Words that must survive rephrasing, per language.
+    keywords:
+      en: drain
+      hi: निकाल
+      mr: null
+    field_operation: drain
+    category: heavy
+    confidence: high
+    source: crida_mh_beed
+    source_note: >-
+      2.2 Unusual rains, "Continuous high rainfall in a short span leading to water
+      logging": "Drain excess water", "Interculture at optimum soil moisture". Heavy
+      rain threshold is IMD's >=64.5 mm in 24 h.
+    en: >-
+      Heavy rain is likely in the coming days. Open field channels and drain excess
+      water from {crops}, and postpone fertiliser top-dressing and any spraying until
+      the rain stops - it will wash off. Do interculture only once the soil is at
+      workable moisture.
+    hi: >-
+      आने वाले दिनों में भारी बारिश की संभावना है। खेत की नालियाँ खोलकर {crops} से
+      अतिरिक्त पानी निकालें, और बारिश रुकने तक ऊपरी खाद और छिड़काव टाल दें - वह बह
+      जाएगा। मिट्टी के सही नमी पर आने के बाद ही निराई-गुड़ाई करें।
+    mr: null
+  FLOOD_PREP:
+    # Words that must survive rephrasing, per language.
+    keywords:
+      en: drainage
+      hi: निकासी
+      mr: null
+    field_operation: drain
+    category: heavy
+    confidence: medium
+    source: crida_br_purnea
+    source_note: >-
+      2.3 Floods, "Transient water logging / partial inundation" and "Continuous
+      submergence for more than 2 days": sub-surface drainage, raised-bed system,
+      stop irrigation, shift produce to a safer place. Confidence medium: the plan
+      keys these to observed inundation, not to a forecast probability, so the
+      trigger threshold here is a project decision.
+    en: >-
+      Very heavy rain is likely and this district floods. Clear drainage channels
+      now, stop irrigation, and move harvested produce, seed and fertiliser to higher
+      ground. If water stands more than two days, prepare to re-sow {crops}.
+    hi: >-
+      बहुत भारी बारिश की संभावना है और यह जिला बाढ़ प्रभावित है। अभी जल निकासी
+      नालियाँ साफ करें, सिंचाई बंद करें, और कटी फसल, बीज तथा खाद ऊँची जगह ले जाएँ।
+      दो दिन से अधिक पानी भरा रहे तो {crops} की दोबारा बुवाई की तैयारी रखें।
+    mr: null
+  MONITOR:
+    # Words that must survive rephrasing, per language.
+    keywords:
+      en: null
+      hi: null
+      mr: null
+    field_operation: none
+    category: none
+    confidence: high
+    source: project
+    source_note: "No hazard above the green band; no contingency action is warranted."
+    en: >-
+      No major rainfall risk is expected for {crops} in this period. Continue your
+      normal package of practices and watch the next forecast.
+    hi: >-
+      इस अवधि में {crops} के लिए कोई बड़ा वर्षा जोखिम अपेक्षित नहीं है। अपनी सामान्य
+      कृषि पद्धति जारी रखें और अगले पूर्वानुमान पर ध्यान दें।
+    mr: null
+
+# Districts where the flood rule applies at all. CRIDA marks flood as a regular
+# contingency for Purnea and Gaya (Bihar); Sehore and Beed mark it as none.
+flood_prone_states: [Bihar]
+
+# Rules are evaluated in order; every match is collected, then tie_break decides.
+# `when` keys: stage, hazard probabilities by horizon, and optional state/zone.
+rules:
+  - id: flood_prep
+    when: {stage: [sowing_window, early_vegetative, flowering], heavy_14: red,
+           state_in: [Bihar]}
+    action: FLOOD_PREP
+  - id: heavy_drainage
+    when: {stage: [sowing_window, early_vegetative, flowering], heavy_7: [amber, red]}
+    action: DRAINAGE_POSTPONE_FERTILIZER_SPRAY
+  - id: dry_life_saving
+    when: {stage: [early_vegetative, flowering], dry_14: red}
+    action: LIFE_SAVING_IRRIGATION_MULCH
+  - id: dry_life_saving_amber_flowering
+    when: {stage: [flowering], dry_14: amber}
+    action: LIFE_SAVING_IRRIGATION_MULCH
+  # The three sowing rules all require that local onset has NOT yet happened.
+  # Without that guard they misfire badly: once onset occurs the onset targets go
+  # NaN (or near zero), which looks identical to "the monsoon is still late", and
+  # the engine would tell a farmer whose crop is already up to switch variety.
+  - id: sow_now
+    when: {stage: [pre_sowing, sowing_window], onset_7: red, onset_happened: false}
+    action: SOW_NOW
+  - id: delay_sowing
+    when: {stage: [pre_sowing, sowing_window], onset_14: green, onset_happened: false}
+    action: DELAY_SOWING_10D
+  - id: switch_short_duration
+    when: {stage: [early_vegetative], onset_28: [green, amber], after_window: true,
+           onset_happened: false}
+    action: SWITCH_SHORT_DURATION
+
+# What to do when several rules fire. This is deliberately explicit: a farmer cannot
+# both irrigate and drain the same field, so conflicting field operations must never
+# appear in one advisory.
+tie_break:
+  # Highest priority first. Ordered by how irreversible and how time-critical the
+  # damage is: standing water kills a crop in days and threatens stored produce,
+  # a dry spell takes weeks, and a sowing decision can still be revised tomorrow.
+  priority:
+    - FLOOD_PREP
+    - DRAINAGE_POSTPONE_FERTILIZER_SPRAY
+    - LIFE_SAVING_IRRIGATION_MULCH
+    - SWITCH_SHORT_DURATION
+    - SOW_NOW
+    - DELAY_SOWING_10D
+    - MONITOR
+  # When a dry-spell and a heavy-rain signal are BOTH red, the forecast is
+  # self-contradictory at this lead time. Take the higher probability as primary; on
+  # an exact tie take the heavy-rain action, because drainage is cheap and reversible
+  # while a wasted irrigation is not. Either way the advisory is downgraded, and the
+  # secondary hazard is reported as a watch rather than as a second instruction.
+  conflicting_hazards:
+    pairs: [[dry, heavy]]
+    resolve_by: higher_probability
+    tie_goes_to: heavy
+    downgrade_confidence_to: low
+    secondary_note_en: >-
+      The forecast also shows a competing {other} risk at {other_pct}%. Treat this
+      advisory as provisional and check the next update before spending on inputs.
+    secondary_note_hi: >-
+      पूर्वानुमान में {other_pct}% की विपरीत {other} जोखिम भी दिख रही है। इस सलाह को
+      अस्थायी मानें और लागत खर्च करने से पहले अगला अपडेट देखें।
+    secondary_note_mr: हवामान अंदाज {other_pct}% वर {other} धोका दर्शवितो. हे सल्ले तात्पुरते समजून घ्या आणि इनपुटवर खर्च करण्यापूर्वी पुढील अपडेट तपासा.
+  # A zone with no sourced NARP mapping cannot support a high-confidence action.
+  unzoned_confidence_ceiling: low
+
+# Crop names per language. Without these every language substituted the
+# English name, so a Hindi advisory read "soybean, cotton, tur" in Latin
+# script mid-sentence. Generated by src/translate_marathi.py.
+crop_names:
+  arhar:
+    en: arhar
+    hi: अरहर
+    mr: तूर
+  bajra:
+    en: bajra
+    hi: बाजरा
+    mr: बाजरी
+  cotton:
+    en: cotton
+    hi: कपास
+    mr: कापूस
+  groundnut:
+    en: groundnut
+    hi: मूंगफली
+    mr: शेंगदाणे
+  jowar:
+    en: jowar
+    hi: ज्वार
+    mr: ज्वारी
+  maize:
+    en: maize
+    hi: मक्का
+    mr: मका
+  moong:
+    en: moong
+    hi: मूंग
+    mr: मूग
+  paddy:
+    en: paddy
+    hi: धान
+    mr: भात
+  soybean:
+    en: soybean
+    hi: सोयाबीन
+    mr: सोयाबीन
+  sugarcane:
+    en: sugarcane
+    hi: गन्ना
+    mr: ऊस
+  til:
+    en: til
+    hi: तिल
+    mr: तिल
+  tur:
+    en: tur
+    hi: तुर
+    mr: टूर
+  urad:
+    en: urad
+    hi: उड़द
+    mr: उडीद

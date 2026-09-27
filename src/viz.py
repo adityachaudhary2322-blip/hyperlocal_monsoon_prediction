@@ -45,6 +45,18 @@ TEXT_MUTED = "#82817c"
 GRID = "#e6e5e1"
 
 RAIN_CMAP = LinearSegmentedColormap.from_list("rain_blue", SEQUENTIAL_BLUE)
+
+# Diverging, for quantities with a meaningful zero (Brier Skill Score: positive beats
+# climatology, negative loses to it). Two hues with a NEUTRAL GREY midpoint, so zero
+# reads as "nothing" rather than as a colour. Built only from documented palette
+# values: the critical red pole, the neutral midpoint, and the blue pole.
+DIVERGING_RED = "#d03b3b"
+DIVERGING_NEUTRAL = "#f0efec"
+DIVERGING_BLUE = "#2a78d6"
+SKILL_CMAP = LinearSegmentedColormap.from_list(
+    "skill", ["#7a1a1a", DIVERGING_RED, "#eab3b1", DIVERGING_NEUTRAL,
+              "#9ec5f4", DIVERGING_BLUE, "#0d366b"],
+)
 # Units with no observation are a distinct absence, not a low value.
 NO_DATA = "#eceae4"
 

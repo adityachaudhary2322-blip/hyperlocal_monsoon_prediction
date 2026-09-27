@@ -1,0 +1,50 @@
+# Keep the Space image small and free of secrets and research data.
+
+# Secrets - never in an image layer, even a private one.
+.env
+*.pem
+*.key
+
+# Research data and trained artifacts. The models and the feature table arrive from
+# the private HF model repo at startup (src/artifacts.py), and forecast state lives in
+# Postgres, so none of this belongs in the build context.
+data/
+models/
+outputs/
+
+# Local environment and caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+.mypy_cache/
+*.egg-info/
+
+# Big binary formats that only the offline pipeline reads
+*.nc
+*.grd
+*.grib
+*.npz
+*.parquet
+*.zip
+*.gpkg
+
+# The app/assets GeoJSON layers are needed, so they are re-included after data/
+!app/assets/*.geojson
+
+# Repo metadata and tests
+.git/
+.github/
+.gitignore
+tests/
+notebooks/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# The laptop-only research requirements file would be misleading inside the image
+requirements-dev.txt
