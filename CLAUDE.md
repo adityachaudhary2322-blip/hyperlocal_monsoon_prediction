@@ -538,3 +538,41 @@ and the site says so. Replay of past dates also waits for it (no free EC46 archi
 - **Accuracy**: `src/accuracy.py` - no overall %, BSS/AUC/hit/FAR/reliability per hazard
   x week; live scorecard needs 30 verified forecasts; blend-weight suggestions go to the
   `settings` table, never applied automatically.
+
+## 20. Navigation, roles and the evaluator demo account (2026-09-28)
+
+**One navigation** (`app/main.py`): `st.navigation(..., position="top")`. Public pages
+(Home, Next 30 days, Accuracy, About) are ungrouped so they stay one click away; signed in,
+an "Officer portal" section adds Overview, Risk changes, Approval queue, Custom alert,
+Outbox, Models, and Settings for roles with the `settings` permission. Streamlit's header
+carries the logo + menu (phones get it as a "☰ Menu" sidebar - never hide `stSidebar`);
+`theme.top_bar` is the slim bar below it: role badge, Sign out, language, Dark mode.
+
+The old bug: officer pages kept Streamlit's transparent header on top of the custom bar,
+so its links and Sign out were unclickable, and phones had no Sign out at all.
+
+Two traps, both fixed:
+- **Sign in stays registered (hidden) after login.** The browser is still on `/sign-in`
+  when the rerun registers the officer pages; if that URL disappears Streamlit shows
+  "Page not found" and serves Home instead of switching to Overview.
+- **AppTest cannot follow an st.navigation app across switch_page** - after a switch it
+  runs the page file alone (no main.py) and lists the legacy `app/pages/` folder.
+  `tests/test_navigation.py` patches `st.navigation` to open a URL path instead (and hands
+  Streamlit's `_can_be_called` run-once flag to that page).
+
+Sign-in lives in session state only - there is no auth cookie. Sign out logs, clears
+session state (keeping language and dark mode) and switches to Home.
+
+**Roles** are `config/roles.yaml` + `app/permissions.py` (`can(user, perm)`).
+
+**Demo account** (`config/demo.yaml`, `src/demo.py`, `src/jobs/demo_reset.py`,
+`.github/workflows/demo-reset.yml` nightly 02:00 IST). Username/password come from
+`DEMO_USERNAME` / `DEMO_PASSWORD` (Streamlit secrets, GitHub secrets, `.env`) - never code;
+login still checks the bcrypt hash. **The demo works on demo copies only**, because
+approved advisories appear on the public map and "Send approved now" sends everything in
+scope. Markers: advisories on the run with `created_by = "demo-seed"` (as_of 2000-01-01),
+alerts with `source = "demo"`, subscribers with phones starting `+9100000`. The public site
+(`public_data.latest_run` / `approved_advisories`), real officer views and the real sender
+exclude all three; a demo send is always mock and reaches only demo subscribers. Every
+demo audit entry starts "[demo]". `tests/test_demo.py` plants real rows beside demo rows
+and checks both directions.

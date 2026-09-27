@@ -1,4 +1,7 @@
-"""Models: provider order, offline switch, and what the language layer has cost."""
+"""Models: what the forecast and language layers are running on, and what they cost.
+
+Read-only for everyone. Changing the provider order or the offline switch is on the
+admin-only Settings page (app/pages/settings.py)."""
 
 from __future__ import annotations
 
@@ -8,9 +11,7 @@ import streamlit as st
 from app.common import (
     effective_llm_config,
     fmt_dt,
-    get_setting,
     require_login,
-    set_setting,
 )
 from src.common import load_config
 from src.db.models import AuditLog
@@ -18,8 +19,12 @@ from src.db.session import get_session
 from src.llm import cache as llm_cache
 from src.runtime import status as runtime_status
 
+from app.permissions import can
+from app.theme import page_header
+
 user = require_login()
-st.title("Models & settings")
+page_header("Models", "What the forecast and language layers are running on, and what "
+            "they have cost. Read-only.")
 
 cfg = effective_llm_config()
 base = load_config("llm")
@@ -49,51 +54,6 @@ with st.expander("Configured providers"):
                             ("yes" if not state["llm_mock"] else "no")),
         })
     st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
-
-# ------------------------------------------------------------------ controls
-st.divider()
-st.subheader("Controls")
-
-if user.role != "admin":
-    st.caption("Changing the provider order or the offline switch is an admin "
-               "action. Both changes are written to the audit log.")
-else:
-    control_columns = st.columns([3, 2])
-
-    with control_columns[0]:
-        current = cfg["fallback_order"]
-        options = {
-            "sarvam → gemini → template": ["sarvam", "gemini", "template"],
-            "gemini → sarvam → template": ["gemini", "sarvam", "template"],
-            "sarvam → template": ["sarvam", "template"],
-            "gemini → template": ["gemini", "template"],
-            "template only": ["template"],
-        }
-        labels = list(options)
-        try:
-            index = [options[l] for l in labels].index(current)
-        except ValueError:
-            index = 0
-        chosen = st.selectbox("Provider order", labels, index=index)
-        if options[chosen] != current:
-            if st.button("Save order", type="primary"):
-                set_setting("fallback_order", options[chosen], user.username)
-                st.success(f"Provider order set to {' → '.join(options[chosen])}.")
-                st.rerun()
-        st.caption("`template` must stay last - it is the only provider that works "
-                   "offline and cannot fail.")
-
-    with control_columns[1]:
-        offline = st.toggle(
-            "Offline mode", value=bool(cfg["offline_mode"]),
-            help="Forces template text regardless of the provider order. The safe "
-                 "setting for a live demo.",
-        )
-        if offline != bool(cfg["offline_mode"]):
-            set_setting("offline_mode", offline, user.username)
-            st.rerun()
-        if offline:
-            st.caption("Forced: no provider will be called.")
 
 # ---------------------------------------------------------------- usage/cost
 st.divider()
@@ -130,14 +90,18 @@ else:
 # -------------------------------------------------------------------- audit
 st.divider()
 st.subheader("Recent configuration changes")
-session = get_session()
+if not can(user, "audit_view"):
+    st.caption("The change log is visible to officers and administrators.")
+    entries = []
+session = get_session() if can(user, "audit_view") else None
 try:
-    entries = (session.query(AuditLog)
+    entries = [] if session is None else (session.query(AuditLog)
                .filter(AuditLog.action.in_(["change_setting", "run_forecast",
                                             "send_approved"]))
                .order_by(AuditLog.created_utc.desc()).limit(25).all())
 finally:
-    session.close()
+    if session is not None:
+        session.close()
 
 if entries:
     st.dataframe(pd.DataFrame([{
@@ -147,7 +111,7 @@ if entries:
         "Target": entry.entity_id,
         "Detail": entry.detail,
     } for entry in entries]), width="stretch", hide_index=True)
-else:
+elif can(user, "audit_view"):
     st.caption("No configuration changes recorded yet.")
 
 # --------------------------------------------------------------- deployment

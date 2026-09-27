@@ -1,0 +1,43 @@
+name: Demo reset
+
+# Nightly reset of the evaluator demo account's data (config/demo.yaml): the demo user and
+# invented demo subscribers exist, the fixed set of ~20 demo advisories is back to pending,
+# and demo outbox messages / custom alerts older than a day are cleared. Touches demo rows
+# only (src/jobs/demo_reset.py, tests/test_demo.py). Never commits.
+#
+# Needs the repository secrets DATABASE_URL_CLOUD, DEMO_USERNAME and DEMO_PASSWORD.
+
+on:
+  schedule:
+    - cron: "30 20 * * *"       # 20:30 UTC = 02:00 IST
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demo-reset
+  cancel-in-progress: false
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-live.txt
+
+      - name: Install
+        run: python -m pip install -r requirements-live.txt
+
+      - name: Reset demo data
+        env:
+          DATABASE_URL_CLOUD: ${{ secrets.DATABASE_URL_CLOUD }}
+          DEMO_USERNAME: ${{ secrets.DEMO_USERNAME }}
+          DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
+        run: python -m src.jobs.demo_reset --db-url-env DATABASE_URL_CLOUD

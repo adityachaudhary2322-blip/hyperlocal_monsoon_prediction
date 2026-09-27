@@ -1,4 +1,9 @@
-"""Overview: what is red, what is waiting, what went out, when it last ran."""
+"""Overview: what is waiting, what is urgent, what went out, and how fresh the forecast is.
+
+Risk numbers come from the daily national run (live_runs, src/live/); advisories from the
+pilot advisory run - or, for the evaluator demo account, from the demo copies only
+(src/demo.py).
+"""
 
 from __future__ import annotations
 
@@ -9,110 +14,116 @@ import sys
 import pandas as pd
 import streamlit as st
 
-from app.common import (artifact_state, fmt_dt, log, require_login, scope_query,
-                        visible_states)
+from app.common import artifact_state, log, require_login, visible_states
+from app.permissions import can
+from app.theme import page_header, tokens
+from src import demo
 from src.common import ROOT
-from src.db.models import Advisory, Forecast, ForecastChange, ForecastRun, Message, Unit
+from src.db.models import Advisory, LiveForecast, LiveRun, LiveUnit, Message, Subscriber, Unit
 from src.db.session import get_session
 
-user = require_login()
-st.title("Overview")
+FRESH_DAYS = 1          # the live run is daily; older than this is stale
 
+user = require_login()
+page_header("Overview", "What needs your review, what is urgent, what went out today, and "
+            "how fresh the forecast is.")
+
+states = visible_states(user)
+today = dt.datetime.now(dt.timezone.utc).date()
 session = get_session()
 try:
-    states = visible_states(user)
-    unit_query = scope_query(session.query(Unit), Unit, user)
-    units = pd.read_sql(unit_query.statement, session.connection())
-    unit_ids = set(units["unit_id"])
+    with st.spinner("Loading the latest numbers..."):
+        # live national run: risk by state ------------------------------------------
+        live = (session.query(LiveRun).filter(LiveRun.run_type == "live",
+                                              LiveRun.keep_detail.is_(True))
+                .order_by(LiveRun.run_date.desc(), LiveRun.id.desc()).first())
+        risk = pd.DataFrame()
+        if live is not None:
+            q = (session.query(LiveUnit.state, LiveForecast.unit_id, LiveForecast.level)
+                 .join(LiveUnit, LiveUnit.unit_id == LiveForecast.unit_id)
+                 .filter(LiveForecast.run_id == live.id, LiveForecast.horizon == 7))
+            if states is not None:
+                q = q.filter(LiveUnit.state.in_(states))
+            risk = pd.DataFrame(q.all(), columns=["state", "unit_id", "level"])
 
-    run = (session.query(ForecastRun)
-           .order_by(ForecastRun.as_of.desc(), ForecastRun.id.desc()).first())
+        # advisories this user works on ----------------------------------------------
+        adv_q = demo.advisory_scope(session.query(Advisory.unit_id, Advisory.status,
+                                                  Advisory.urgent, Unit.state)
+                                    .join(Unit, Unit.unit_id == Advisory.unit_id), session, user)
+        run = demo.advisory_run(session, user)
+        adv_q = adv_q.filter(Advisory.run_id == (run.id if run else -1))
+        if states is not None:
+            adv_q = adv_q.filter(Unit.state.in_(states))
+        advisories = pd.DataFrame(adv_q.all(), columns=["unit_id", "status", "urgent", "state"])
 
-    if run is None:
-        st.info("No forecast has been run yet. Use **Run forecast** below "
-                "(admin), or `python -m src.pipeline.run --as-of YYYY-MM-DD`.")
-        red_units = pending = sent = 0
-        forecasts = pd.DataFrame()
-        advisories = pd.DataFrame()
-    else:
-        forecasts = pd.read_sql(
-            session.query(Forecast).filter(Forecast.run_id == run.id).statement,
-            session.connection())
-        forecasts = forecasts[forecasts["unit_id"].isin(unit_ids)]
-        advisories = pd.read_sql(
-            session.query(Advisory).filter(Advisory.run_id == run.id).statement,
-            session.connection())
-        advisories = advisories[advisories["unit_id"].isin(unit_ids)]
-
-        red_units = int(forecasts.loc[forecasts["risk_level"] == "red",
-                                      "unit_id"].nunique())
-        pending = int((advisories["status"] == "pending_approval").sum())
-        message_query = session.query(Message)
-        sent = message_query.count() if states is None else (
-            message_query.join(Advisory, Message.advisory_id == Advisory.id, isouter=True)
-            .count()
-        )
-
-    columns = st.columns(4)
-    columns[0].metric("Units at high risk", red_units,
-                      help="Any hazard in the >60% band on the latest run")
-    columns[1].metric("Pending approvals", pending)
-    columns[2].metric("Messages sent", sent, help="Mock messages count here too")
-    columns[3].metric("Last run", run.as_of.isoformat() if run else "-",
-                      help=fmt_dt(run.created_utc) if run else "never")
-
-    if run and run.substitution_note:
-        st.caption(f":material/info: {run.substitution_note}")
-
-    # ---------------------------------------------------------------- per state
-    st.subheader("By state")
-    if forecasts.empty:
-        st.caption("Nothing to show until a forecast has been run.")
-    else:
-        merged = forecasts.merge(units[["unit_id", "state", "district"]],
-                                 on="unit_id", how="left")
-        rows = []
-        for state, group in merged.groupby("state"):
-            adv = advisories.merge(units[["unit_id", "state"]], on="unit_id")
-            adv = adv[adv["state"] == state]
-            rows.append({
-                "State": state,
-                "Units": group["unit_id"].nunique(),
-                "◆ High": int(group.loc[group["risk_level"] == "red",
-                                     "unit_id"].nunique()),
-                "▲ Medium": int(group.loc[group["risk_level"] == "amber",
-                                       "unit_id"].nunique()),
-                "Advisories": len(adv),
-                "⏳ Pending": int((adv["status"] == "pending_approval").sum()),
-                "✓ Approved": int((adv["status"] == "approved").sum()),
-                "➤ Sent": int((adv["status"] == "sent").sum()),
-            })
-        st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
-
-    # ------------------------------------------------------------ what changed
-    if run is not None:
-        changes = pd.read_sql(
-            session.query(ForecastChange)
-            .filter(ForecastChange.run_id == run.id,
-                    ForecastChange.escalated.is_(True)).statement,
-            session.connection())
-        changes = changes[changes["unit_id"].isin(unit_ids)]
-        if not changes.empty:
-            st.subheader("Escalated since the previous run")
-            view = changes.merge(units[["unit_id", "unit_name", "district"]],
-                                 on="unit_id", how="left")
-            view = view[["unit_name", "district", "hazard", "horizon",
-                         "previous_risk", "risk_level", "delta"]]
-            view.columns = ["Unit", "District", "Hazard", "Horizon",
-                            "Was", "Now", "Change"]
-            st.dataframe(view.sort_values("Change", ascending=False),
-                         width="stretch", hide_index=True)
+        start = dt.datetime.combine(today, dt.time.min, tzinfo=dt.timezone.utc)
+        sent_q = demo.subscriber_scope(
+            session.query(Message.id).join(Subscriber, Subscriber.id == Message.subscriber_id)
+            .filter(Message.sent_utc >= start), user)
+        if states is not None:
+            sent_q = sent_q.filter(Subscriber.state.in_(states))
+        sent_today = sent_q.count()
 finally:
     session.close()
 
+pending = advisories[advisories["status"] == "pending_approval"] if not advisories.empty else advisories
+high_units = int(risk.loc[risk["level"] == "red", "unit_id"].nunique()) if not risk.empty else 0
+
+with st.container(key="mo_metrics"):
+    m = st.columns(4)
+m[0].metric("Waiting for review", len(pending))
+m[1].metric("Urgent", int(pending["urgent"].sum()) if not pending.empty else 0,
+            help="Heavy rain within 7 days, or a red risk band with a short lead time")
+m[2].metric("Sent today", sent_today,
+            help="Demo outbox only" if demo.is_demo(user) else "Mock messages count too")
+m[3].metric("Units at high risk", high_units, help="Any hazard above 60% in the next 7 days")
+
+if live is None:
+    st.html("<p class='mo-fresh mo-stale'>▲ <b>Last forecast run:</b> none yet. The daily "
+            "run starts at 10:00 IST.</p>")
+else:
+    age = (today - live.run_date).days
+    fresh = age <= FRESH_DAYS
+    when = live.created_utc.strftime("%d %b %Y, %H:%M UTC") if live.created_utc else live.run_date
+    st.html(f"<p class='mo-fresh {'mo-ok' if fresh else 'mo-stale'}'>"
+            f"{'● ' if fresh else '▲ '}<b>Last forecast run:</b> {when} · "
+            f"{'fresh' if fresh else f'stale, {age} days old'}"
+            + (" · data delayed" if live.data_delayed else "") + "</p>")
+
+# ---------------------------------------------------------------- per state
+st.subheader("By state")
+if risk.empty:
+    st.caption("No forecast yet. New forecasts arrive every morning.")
+else:
+    rows = []
+    for state, g in risk.groupby("state"):
+        a = advisories[advisories["state"] == state] if not advisories.empty else advisories
+        count = lambda s: int((a["status"] == s).sum()) if not a.empty else 0
+        rows.append({"State": state, "Units": g["unit_id"].nunique(),
+                     "High risk": int(g.loc[g["level"] == "red", "unit_id"].nunique()),
+                     "Medium risk": int(g.loc[g["level"] == "amber", "unit_id"].nunique()),
+                     "Waiting": count("pending_approval"), "Approved": count("approved"),
+                     "Sent": count("sent")})
+    frame = pd.DataFrame(rows).sort_values("High risk", ascending=False)
+    tok = tokens()
+    styled = (frame.style
+              .format({"High risk": "◆ {}", "Medium risk": "▲ {}"})
+              .map(lambda v: f"color: {tok['risk-high-ink']}; font-weight: 600", subset=["High risk"])
+              .map(lambda v: f"color: {tok['risk-med-ink']}; font-weight: 600", subset=["Medium risk"]))
+    st.dataframe(styled, hide_index=True, width="stretch", column_config={
+        "State": st.column_config.TextColumn(width="medium"),
+        "Units": st.column_config.NumberColumn(help="Sub-districts in the forecast"),
+        "High risk": st.column_config.TextColumn(help="Units with any hazard above 60%, next 7 days"),
+        "Medium risk": st.column_config.TextColumn(help="Units with a hazard at 30-60%, next 7 days"),
+        "Waiting": st.column_config.NumberColumn(help="Advisories waiting for review"),
+    })
+    st.caption("Risk: daily national run, next 7 days. Advisories: "
+               + ("demo copies for the pilot districts." if demo.is_demo(user)
+                  else "the latest pilot advisory run."))
+
 # ------------------------------------------------------------------ run button
 st.divider()
-if user.role == "admin":
+if can(user, "run_forecast"):
     st.subheader("Run a forecast")
 
     from src.config import hosted

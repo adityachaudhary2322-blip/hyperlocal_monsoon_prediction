@@ -89,9 +89,15 @@ def deliver(session, *, subscriber: Subscriber, body: str, language: str,
 
 
 def eligible_subscribers(session, unit_id: str | None = None,
-                         state: str | None = None, district: str | None = None):
+                         state: str | None = None, district: str | None = None,
+                         demo: bool = False):
+    """Consented subscribers. Demo sends reach only the invented demo subscribers
+    (config/demo.yaml); real sends never reach them."""
+    from src import demo as demo_rules
+
     query = session.query(Subscriber).filter(
-        Subscriber.consent.is_(True), Subscriber.do_not_send.is_(False)
+        Subscriber.consent.is_(True), Subscriber.do_not_send.is_(False),
+        demo_rules.demo_subscriber_clause() if demo else demo_rules.real_subscriber_clause(),
     )
     if unit_id:
         query = query.filter(Subscriber.unit_id == unit_id)
@@ -103,19 +109,31 @@ def eligible_subscribers(session, unit_id: str | None = None,
 
 
 def send_approved(session, *, sent_by: str = "system", states: list[str] | None = None,
-                  dry_run: bool = False) -> dict:
-    """Send every approved advisory and alert. Returns counts."""
-    mock = sender_is_mock()
+                  dry_run: bool = False, demo: bool = False) -> dict:
+    """Send every approved advisory and alert. Returns counts.
+
+    `demo=True` (the evaluator account) sends only demo items, only to demo subscribers,
+    and always to the mock outbox - even when Twilio keys exist. `demo=False` never
+    touches a demo item."""
+    from src import demo as demo_rules
+
+    mock = True if demo else sender_is_mock()
     rules_cfg = load_config("rules")
     counts = {"advisories": 0, "alerts": 0, "messages": 0, "skipped_no_text": 0,
               "skipped_invalid": 0, "no_subscribers": 0}
 
-    advisories = session.query(Advisory).filter(Advisory.status == "approved").all()
+    demo_runs = demo_rules.demo_run_ids(session)
+    advisory_query = session.query(Advisory).filter(Advisory.status == "approved")
+    if demo:
+        advisory_query = advisory_query.filter(Advisory.run_id.in_(demo_runs or [-1]))
+    elif demo_runs:
+        advisory_query = advisory_query.filter(Advisory.run_id.notin_(demo_runs))
+    advisories = advisory_query.all()
     for advisory in advisories:
         unit = session.get(Unit, advisory.unit_id)
         if unit is None or (states and unit.state not in states):
             continue
-        people = eligible_subscribers(session, unit_id=advisory.unit_id)
+        people = eligible_subscribers(session, unit_id=advisory.unit_id, demo=demo)
         if not people:
             counts["no_subscribers"] += 1
             continue
@@ -144,13 +162,17 @@ def send_approved(session, *, sent_by: str = "system", states: list[str] | None 
             advisory.status = "sent"
             counts["advisories"] += 1
 
-    alerts = session.query(Alert).filter(Alert.status == "approved").all()
+    alert_query = session.query(Alert).filter(Alert.status == "approved")
+    alert_source = demo_rules.cfg()["alert_source"]
+    alert_query = alert_query.filter(Alert.source == alert_source if demo else
+                                     ((Alert.source.is_(None)) | (Alert.source != alert_source)))
+    alerts = alert_query.all()
     for alert in alerts:
         kwargs = ({"state": alert.target_value} if alert.target_kind == "state"
                   else {"district": alert.target_value})
         if states and alert.target_kind == "state" and alert.target_value not in states:
             continue
-        people = eligible_subscribers(session, **kwargs)
+        people = eligible_subscribers(session, **kwargs, demo=demo)
         if not people:
             counts["no_subscribers"] += 1
             continue
@@ -171,7 +193,7 @@ def send_approved(session, *, sent_by: str = "system", states: list[str] | None 
         session.add(AuditLog(
             username=sent_by, action="send_approved", entity="messages",
             entity_id="-",
-            detail=f"channel={'mock' if mock else 'whatsapp'} "
+            detail=("[demo] " if demo else "") + f"channel={'mock' if mock else 'whatsapp'} "
                    f"messages={counts['messages']} advisories={counts['advisories']} "
                    f"alerts={counts['alerts']}",
         ))

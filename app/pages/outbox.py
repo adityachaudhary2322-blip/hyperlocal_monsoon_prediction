@@ -7,42 +7,57 @@ import html
 import pandas as pd
 import streamlit as st
 
-from app.common import fmt_dt, log, require_login, visible_states
+from app.common import audit, require_login, visible_states
+from app.theme import page_header
+from src import demo
 from src.db.models import Advisory, Alert, Message, Subscriber, Unit
 from src.db.session import get_session
 from src.runtime import sender_is_mock, sender_mock_reason
 
 user = require_login()
-st.title("Outbox")
+page_header("Outbox", "Approved advice waiting to go out, everything already sent, and how "
+            "each message looks on a farmer's phone.")
 
-mock = sender_is_mock()
-if mock:
+is_demo = demo.is_demo(user)
+mock = True if is_demo else sender_is_mock()
+if is_demo:
+    st.info(":material/smartphone: This is the demo outbox: sending writes demo messages "
+            "to invented demo subscribers. Nothing reaches a real phone.")
+elif mock:
     st.info(f":material/smartphone: Messages are written to the database with "
             f"`channel=mock` and never leave this machine ({sender_mock_reason()}).")
 else:
     st.error(":material/warning: **Live sending is on.** Pressing send will deliver "
              "real WhatsApp messages through Twilio.")
 
+
+
+def mask_phone(phone: str | None) -> str:
+    """+91 ••••••4321 - the full number never reaches the screen (or a screenshot)."""
+    digits = "".join(c for c in (phone or "") if c.isdigit())
+    return f"+91 ••••••{digits[-4:]}" if len(digits) >= 4 else "••••"
+
+
 session = get_session()
 try:
     states = visible_states(user)
 
-    approved_query = (session.query(Advisory, Unit)
-                      .join(Unit, Advisory.unit_id == Unit.unit_id)
-                      .filter(Advisory.status == "approved"))
+    approved_query = demo.advisory_scope(
+        session.query(Advisory, Unit).join(Unit, Advisory.unit_id == Unit.unit_id)
+        .filter(Advisory.status == "approved"), session, user)
     if states is not None:
         approved_query = approved_query.filter(Unit.state.in_(states))
     approved = approved_query.all()
 
-    alert_query = session.query(Alert).filter(Alert.status == "approved")
+    alert_query = demo.alert_scope(session.query(Alert).filter(Alert.status == "approved"), user)
     if states is not None:
         alert_query = alert_query.filter(
             (Alert.target_kind == "district") | (Alert.target_value.in_(states)))
     approved_alerts = alert_query.all()
 
-    message_query = (session.query(Message, Subscriber)
-                     .join(Subscriber, Message.subscriber_id == Subscriber.id)
-                     .order_by(Message.sent_utc.desc()))
+    message_query = demo.subscriber_scope(
+        session.query(Message, Subscriber).join(Subscriber, Message.subscriber_id == Subscriber.id)
+        .order_by(Message.sent_utc.desc()), user)
     if states is not None:
         message_query = message_query.filter(Subscriber.state.in_(states))
     messages = message_query.limit(500).all()
@@ -53,7 +68,7 @@ columns = st.columns(4)
 columns[0].metric("Approved advisories waiting", len(approved))
 columns[1].metric("Approved alerts waiting", len(approved_alerts))
 columns[2].metric("Messages sent", len(messages))
-columns[3].metric("Channel", "mock" if mock else "whatsapp")
+columns[3].metric("Channel", "demo outbox" if is_demo else ("mock" if mock else "whatsapp"))
 
 # --------------------------------------------------------------------- send
 send_disabled = not (approved or approved_alerts)
@@ -66,8 +81,8 @@ if st.button("Send approved now", type="primary", disabled=send_disabled,
     with st.spinner("Sending..."):
         with session_scope() as write_session:
             counts = send_approved(write_session, sent_by=user.username,
-                                   states=states)
-    log(user.username, "send_approved", "messages", "-",
+                                   states=states, demo=is_demo)
+    audit(user, "send_approved", "messages", "-",
         f"messages={counts['messages']} advisories={counts['advisories']} "
         f"alerts={counts['alerts']} channel={'mock' if mock else 'whatsapp'}")
     st.success(
@@ -83,7 +98,9 @@ if st.button("Send approved now", type="primary", disabled=send_disabled,
 st.divider()
 
 if not messages:
-    st.caption("Nothing sent yet. Approve something, then press **Send approved now**.")
+    st.html("<div class='mo-empty'><p class='mo-empty-title'>Nothing sent yet.</p>"
+            "<p>Approve advice in the Approval queue, then press <b>Send approved now</b>.</p>"
+            "</div>")
     st.stop()
 
 # ------------------------------------------------------------------- listing
@@ -92,19 +109,22 @@ left, right = st.columns([3, 2])
 with left:
     st.subheader("Sent messages")
     frame = pd.DataFrame([{
-        "id": message.id,
-        "When": fmt_dt(message.sent_utc),
+        "When": message.sent_utc,
         "To": subscriber.name,
+        "Phone": mask_phone(subscriber.phone),
         "District": subscriber.district,
-        "Lang": message.language,
-        "Channel": message.channel,
-        "Status": (("✕ " if message.error else "✓ ")
-                   + (message.delivery_status or "")),
-        "Preview": (message.body[:60] + "...") if len(message.body) > 60
-                   else message.body,
+        "Language": {"en": "English", "hi": "हिन्दी", "mr": "मराठी"}.get(message.language,
+                                                                     message.language),
+        "Channel": "demo outbox" if is_demo else message.channel,
+        "Status": ("✕ failed" if message.error else "✓ " + (message.delivery_status or "sent")),
+        "Message": message.body,
     } for message, subscriber in messages])
-    st.dataframe(frame.drop(columns=["id"]), width="stretch",
-                 hide_index=True, height=420)
+    st.dataframe(frame, width="stretch", hide_index=True, height=420, column_config={
+        "When": st.column_config.DatetimeColumn(format="D MMM YYYY, HH:mm", timezone="UTC"),
+        "Phone": st.column_config.TextColumn(help="Only the last 4 digits are shown"),
+        "Status": st.column_config.TextColumn(width="small"),
+        "Message": st.column_config.TextColumn(width="large"),
+    })
 
     options = {f"#{m.id} · {s.name} ({m.language})": m.id for m, s in messages}
     chosen_label = st.selectbox("Preview on a phone", list(options))
@@ -117,7 +137,7 @@ with right:
 
     # Only the last 4 digits: the preview is a demo surface, and a full number on
     # screen is a number that ends up in a screenshot.
-    masked = f"•••••{subscriber.phone[-4:]}"
+    masked = mask_phone(subscriber.phone)
     body = html.escape(message.body).replace("\n", "<br>")
     stamp = message.sent_utc.strftime("%H:%M")
     tick = "✓✓" if "deliver" in (message.delivery_status or "").lower() else "✓"

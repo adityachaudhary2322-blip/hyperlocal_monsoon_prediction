@@ -9,7 +9,7 @@ recording every SQL statement a public page run issues):
   Never obs_unit_rain directly (the panel reads its summaries from live_weather).
 * **Never:** subscribers, messages, users, audit_log, alerts, settings,
   forecast_changes - and never an advisory that is pending or rejected, nor who decided
-  it or why.
+  it or why, nor anything on the evaluator demo run (src/demo.py), even once approved.
 
 An advisory an officer edited is shown as the edited text only: `edited_text` is what
 was approved and what `src.sender` actually delivers, while the original Hindi/Marathi
@@ -30,6 +30,7 @@ from src.db.models import (Advisory, Forecast, ForecastRun, LiveForecast, LiveOu
                            LiveRun, LiveUnit, LiveVerification, LiveWeather, Unit,
                            WeatherFetch, WeatherGrid, WeatherNow, WeatherState)
 from src.db.session import get_session
+from src.demo import real_run_clause
 
 PUBLIC_STATUSES = ("approved", "sent")
 ALLOWED_TABLES = frozenset({"units", "forecast_runs", "forecasts", "advisories",
@@ -56,6 +57,7 @@ def _frame(statement) -> pd.DataFrame:
 def latest_run() -> dict | None:
     rows = _frame(select(ForecastRun.id, ForecastRun.as_of, ForecastRun.created_utc,
                          ForecastRun.n_units)
+                  .where(real_run_clause())          # never the evaluator demo run
                   .order_by(ForecastRun.as_of.desc(), ForecastRun.id.desc()).limit(1))
     if rows.empty:
         return None
@@ -82,7 +84,9 @@ def approved_advisories(run_id: int) -> dict[str, dict]:
     rows = _frame(
         select(Advisory.unit_id, Advisory.text_en, Advisory.text_hi, Advisory.text_mr,
                Advisory.edited_text)
-        .where(Advisory.run_id == run_id, Advisory.status.in_(PUBLIC_STATUSES))
+        .join(ForecastRun, ForecastRun.id == Advisory.run_id)
+        .where(Advisory.run_id == run_id, Advisory.status.in_(PUBLIC_STATUSES),
+               real_run_clause())
     )
     out: dict[str, dict] = {}
     for row in rows.itertuples():

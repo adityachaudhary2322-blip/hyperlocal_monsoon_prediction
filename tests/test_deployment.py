@@ -697,6 +697,7 @@ def test_runtime_grid_files_are_not_committed():
 
 
 @pytest.mark.parametrize("workflow,reqs", [("live.yml", "requirements-live.txt"),
+                                           ("demo-reset.yml", "requirements-live.txt"),
                                            ("weather-grid.yml", "requirements-weather.txt")])
 def test_workflows_read_the_database_url_by_name_only(workflow, reqs):
     text = (ROOT / ".github" / "workflows" / workflow).read_text(encoding="utf-8")

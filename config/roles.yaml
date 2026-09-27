@@ -1,0 +1,20 @@
+# Who may do what in the officer portal. Read by app/permissions.py; pages call can().
+# `demo` is the evaluator account (config/demo.yaml): officer pages, demo data only,
+# and never a real message.
+permissions:
+  portal:         [admin, officer, demo]    # Overview, Risk changes, Approval queue, Custom alert, Outbox, Models
+  approve:        [admin, officer, demo]
+  custom_alert:   [admin, officer, demo]
+  send:           [admin, officer, demo]    # demo sends always go to the mock outbox
+  real_send:      [admin, officer]
+  settings:       [admin]                   # the Settings page: provider order, offline switch
+  alert_policy:   [admin]
+  manage_users:   [admin]
+  switch_models:  [admin]
+  run_forecast:   [admin]
+  audit_view:     [admin, officer]
+
+badges:
+  admin: Admin
+  officer: Officer
+  demo: Demo mode

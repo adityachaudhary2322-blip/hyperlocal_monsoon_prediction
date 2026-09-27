@@ -78,9 +78,9 @@ def login_form() -> User | None:
     import bcrypt
 
     with st.form("login", border=True, width=420):
-        username = st.text_input("Username", autocomplete="username")
+        username = st.text_input("Username", autocomplete="username", key="login_user")
         password = st.text_input("Password", type="password",
-                                 autocomplete="current-password")
+                                 autocomplete="current-password", key="login_pass")
         submitted = st.form_submit_button("Sign in", type="primary")
 
     if not submitted:
@@ -98,7 +98,10 @@ def login_form() -> User | None:
             return None
         session.expunge(user)
         st.session_state["user"] = user
-        log(username.strip(), "login", "user", username.strip())
+        for key in ("login_user", "login_pass"):
+            st.session_state.pop(key, None)
+        log(username.strip(), "login", "user", username.strip(),
+            "[demo]" if user.role == "demo" else None)
         return user
     finally:
         session.close()
@@ -140,9 +143,17 @@ def scope_query(query, model, user: User):
 # --------------------------------------------------------------------------
 # Banners
 # --------------------------------------------------------------------------
-def mode_banner() -> dict:
-    """The yellow offline banner. Always shown when anything is mocked."""
+def mode_banner(user=None) -> dict:
+    """One calm line saying what is real. The demo account always hears that it works on
+    demo copies; everyone else hears it whenever anything is mocked."""
+    from src import demo
+
     state = runtime_status()
+    if demo.is_demo(user):
+        st.info("**Demo mode.** You are reviewing demo copies of advisories for the pilot "
+                "districts. Anything you send goes to a demo outbox, never to real phones, "
+                "and the demo data resets every night.", icon=":material/science:")
+        return state
     if state["llm_mock"] or state["sender_mock"]:
         bits = []
         if state["llm_mock"]:
@@ -254,3 +265,12 @@ def units_frame(user: User) -> pd.DataFrame:
 
 def fmt_dt(value: dt.datetime | None) -> str:
     return "-" if value is None else value.strftime("%Y-%m-%d %H:%M UTC")
+
+
+def audit(user, action: str, entity: str | None = None, entity_id=None,
+          detail: str | None = None) -> None:
+    """log() for a signed-in user's action; the demo account's entries are tagged."""
+    from src import demo
+
+    log(user.username, action, entity, entity_id,
+        demo.tag(detail) if demo.is_demo(user) else detail)

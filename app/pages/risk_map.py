@@ -1,4 +1,5 @@
-"""Risk Map: choropleth of one state's sub-districts for one hazard and horizon.
+"""Risk changes: what escalated since the previous run, and a choropleth of one state's
+sub-districts for one hazard and horizon.
 
 Geometry comes from `app/assets/map_layers_simplified.gpkg`, committed and simplified to
 2.1 MB by `scripts/build_map_assets.py`. `data/processed/units.gpkg` is gitignored and
@@ -21,10 +22,11 @@ import streamlit as st
 from streamlit_folium import st_folium
 
 from app.common import RISK_COLOURS, require_login, risk_chip, visible_states
-from app.theme import status_label
+from app.theme import page_header, status_label
+from src import demo
 
 RISK_TINTS = {"green": "#DCEFE3", "amber": "#F8E8C4", "red": "#F4D5D2"}
-from src.db.models import Advisory, Forecast, ForecastRun, Unit
+from src.db.models import Advisory, Forecast, ForecastChange, Unit
 from src.db.session import get_session
 
 HAZARDS = {"dry": "Dry spell", "heavy": "Heavy rain", "onset": "Monsoon onset"}
@@ -35,7 +37,8 @@ MAP_LAYERS = ASSETS / "map_layers_simplified.gpkg"
 MAP_LAYER_NAME = "units"
 
 user = require_login()
-st.title("Risk map")
+page_header("Risk changes", "Where risk went up since the previous forecast, and a map of "
+            "one state's sub-districts for one hazard and week.")
 
 
 @st.cache_data(show_spinner="Loading map layer...", max_entries=2, ttl=3600)
@@ -67,10 +70,10 @@ def load_state_geometry(state: str) -> dict:
 
 session = get_session()
 try:
-    run = (session.query(ForecastRun)
-           .order_by(ForecastRun.as_of.desc(), ForecastRun.id.desc()).first())
+    run = demo.latest_real_run(session)
     if run is None:
-        st.info("No forecast has been run yet.")
+        st.info("No forecast yet. New forecasts arrive every morning.",
+                icon=":material/schedule:")
         st.stop()
 
     scope = visible_states(user)
@@ -82,8 +85,15 @@ try:
     forecasts = pd.read_sql(
         session.query(Forecast).filter(Forecast.run_id == run.id).statement,
         session.connection())
+    # The demo account sees its demo copies; everyone else the real run's advisories.
+    advisory_run = demo.advisory_run(session, user)
     advisories = pd.read_sql(
-        session.query(Advisory).filter(Advisory.run_id == run.id).statement,
+        demo.advisory_scope(session.query(Advisory), session, user)
+        .filter(Advisory.run_id == (advisory_run.id if advisory_run else -1)).statement,
+        session.connection())
+    changes = pd.read_sql(
+        session.query(ForecastChange)
+        .filter(ForecastChange.run_id == run.id, ForecastChange.escalated.is_(True)).statement,
         session.connection())
 finally:
     session.close()
@@ -92,6 +102,28 @@ if units.empty:
     st.info("No units are in your scope.")
     st.stop()
 
+# ------------------------------------------------------------ what changed
+st.subheader("Escalated since the previous run")
+changes = changes[changes["unit_id"].isin(set(units["unit_id"]))]
+if changes.empty:
+    st.caption("Nothing escalated since the previous run.")
+else:
+    view = changes.merge(units[["unit_id", "unit_name", "district"]], on="unit_id", how="left")
+    view = view[["unit_name", "district", "hazard", "horizon", "previous_risk",
+                 "risk_level", "delta"]].sort_values("delta", ascending=False)
+    view["hazard"] = view["hazard"].map(HAZARDS).fillna(view["hazard"])
+    view["horizon"] = view["horizon"].map(lambda h: f"week {int(h) // 7}")
+    arrow = {"green": "● Low", "amber": "▲ Medium", "red": "◆ High"}
+    view["previous_risk"] = view["previous_risk"].map(arrow).fillna("-")
+    view["risk_level"] = view["risk_level"].map(arrow).fillna("-")
+    st.dataframe(view, hide_index=True, width="stretch", column_config={
+        "unit_name": "Sub-district", "district": "District", "hazard": "Hazard",
+        "horizon": "When", "previous_risk": "Was", "risk_level": "Now",
+        "delta": st.column_config.ProgressColumn("Rise in chance", format="percent",
+                                                 min_value=0.0, max_value=1.0),
+    })
+
+st.subheader("Map")
 available_states = sorted(units["state"].unique())
 
 controls = st.columns([2, 2, 2, 3])

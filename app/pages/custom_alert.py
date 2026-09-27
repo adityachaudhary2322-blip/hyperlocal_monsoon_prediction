@@ -4,16 +4,17 @@ from __future__ import annotations
 
 import streamlit as st
 
-from app.common import app_chain, log, require_login, visible_states
+from app.common import app_chain, audit, require_login, visible_states
+from app.theme import page_header
+from src import demo
 from src.db.models import Alert, Unit
 from src.db.session import get_session
 from src.llm.validation import ValidationError, validate_text
 from src.runtime import llm_is_mock, llm_mock_reason
 
 user = require_login()
-st.title("Custom alert")
-st.caption("Anything written here still goes through the approval queue - including "
-           "your own. Nothing on this page sends a message.")
+page_header("Custom alert", "Write your own message for a state or district. It goes to the "
+            "Approval queue like everything else - nothing on this page sends a message.")
 
 session = get_session()
 try:
@@ -82,7 +83,7 @@ if translate_clicked:
                          f"({result.latency_ms or 0:.0f} ms)")
             except Exception as exc:  # noqa: BLE001 - surfaced to the officer
                 st.error(f"{language}: {exc}")
-    log(user.username, "translate_alert", "alert", "-",
+    audit(user, "translate_alert", "alert", "-",
         f"target={target_kind}:{target_value}")
 
 text_hi = st.text_area("हिन्दी (Hindi)", height=110,
@@ -104,6 +105,12 @@ for label, body, language in (("English", text_en, "en"),
 st.divider()
 if st.button("Submit for approval", type="primary",
              disabled=not (title.strip() and text_en.strip())):
+    # Checked again here, not just by the choices offered: a target outside the user's
+    # scope (or "all India") is refused however the request was made.
+    allowed = set(all_states) if target_kind == "state" else set(all_districts)
+    if target_kind not in ("state", "district") or target_value not in allowed:
+        st.error("That target is outside the areas you can send to.")
+        st.stop()
     session = get_session()
     try:
         alert = Alert(
@@ -111,7 +118,8 @@ if st.button("Submit for approval", type="primary",
             text_en=text_en.strip() or None,
             text_hi=(text_hi or "").strip() or None,
             text_mr=(text_mr or "").strip() or None,
-            source=st.session_state.get("alert_source", "officer"),
+            source=(demo.cfg()["alert_source"] if demo.is_demo(user)
+                    else st.session_state.get("alert_source", "officer")),
             status="pending_approval",
             status_reason="Officer-written alert - all custom alerts are reviewed",
             created_by=user.username,
@@ -122,7 +130,7 @@ if st.button("Submit for approval", type="primary",
     finally:
         session.close()
 
-    log(user.username, "create_alert", "alert", alert_id,
+    audit(user, "create_alert", "alert", alert_id,
         f"{target_kind}={target_value} title={title.strip()}")
     st.success(f"Alert #{alert_id} sent to the Approval Queue.")
     for key in ("alert_hi", "alert_mr", "alert_source"):

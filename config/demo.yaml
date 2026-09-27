@@ -1,0 +1,67 @@
+# The evaluator demo account and the data it may touch. Read by src/demo.py,
+# src/jobs/demo_reset.py and the officer pages; nothing about the demo is hardcoded there.
+#
+# SAFETY MODEL: the demo account works on demo copies only.
+#   * Demo advisories live on one dedicated forecast run whose created_by is `run_mark`.
+#     Real officer views, the public site and the real sender all skip that run.
+#   * Demo custom alerts carry source = `alert_source`.
+#   * Demo subscribers are invented people whose phone numbers start with
+#     `subscriber_phone_prefix` (+91 00000... is not an allocated Indian mobile range).
+#   * Anything the demo account sends goes to the mock outbox, even when Twilio keys exist.
+# The username and password are NOT here: DEMO_USERNAME / DEMO_PASSWORD come from
+# st.secrets or .env (src/config.py), and login checks the bcrypt hash in `users`.
+
+role: demo
+run_mark: demo-seed
+run_as_of: "2000-01-01"          # never the "latest" run by date, and filtered by run_mark too
+alert_source: demo
+audit_tag: "[demo]"
+subscriber_phone_prefix: "+9100000"
+message_retention_days: 1
+states: [Uttar Pradesh, Bihar, Madhya Pradesh, Maharashtra, NCT of Delhi]
+
+subscribers:
+  - {name: Demo farmer - Ramesh, phone: "+910000000001", language: hi, unit_id: IND.34.40.2_1, district: Jhansi, state: Uttar Pradesh}
+  - {name: Demo farmer - Sunita, phone: "+910000000002", language: hi, unit_id: IND.5.10.1_1, district: Gaya, state: Bihar}
+  - {name: Demo farmer - Mohan, phone: "+910000000003", language: hi, unit_id: IND.19.39.5_1, district: Sehore, state: Madhya Pradesh}
+  - {name: Demo farmer - Kavita, phone: "+910000000004", language: hi, unit_id: IND.19.23.1_1, district: Indore, state: Madhya Pradesh}
+  - {name: Demo farmer - Sachin, phone: "+910000000005", language: mr, unit_id: IND.20.16.2_1, district: Latur, state: Maharashtra}
+  - {name: Demo farmer - Asha, phone: "+910000000006", language: mr, unit_id: IND.20.6.3_1, district: Bid, state: Maharashtra}
+  - {name: Demo farmer - Imran, phone: "+910000000007", language: en, unit_id: IND.34.33.2_1, district: Gorakhpur, state: Uttar Pradesh}
+
+# Marathi drafts for the demo (rules.yaml has English and Hindi; its Marathi is filled by
+# src.translate_rules). Drafted for the demo, not reviewed by a native speaker.
+marathi:
+  SOW_NOW: "पुढील आठवड्यात मान्सूनचा पाऊस येण्याची शक्यता आहे. शेत तयार असल्यास {crops} ची पेरणी आता नेहमीच्या वाणाने आणि अंतराने करा. पाऊस सुरू होण्यापूर्वी बियाणे आणि खत तयार ठेवा."
+  DELAY_SOWING_10D: "पुढील दोन आठवड्यांत मान्सूनचा पाऊस येण्याची शक्यता कमी आहे. {crops} ची पेरणी सुमारे १० दिवस थांबवा आणि कोरडी पेरणी करू नका. या काळात शेताची मशागत करा आणि बियाणे कोरडे ठेवा."
+  SWITCH_SHORT_DURATION: "{crops} च्या पेरणीची वेळ निघून गेली आहे आणि मान्सून अजूनही उशिरा आहे. कृषी विज्ञान केंद्राने सुचवलेले कमी कालावधीचे वाण वापरा, बीजप्रक्रिया करा आणि पुरेसा ओलावा येताच पेरणी करा."
+  LIFE_SAVING_IRRIGATION_MULCH: "येत्या आठवड्यांत पावसाचा मोठा खंड पडण्याची शक्यता आहे. पाणी उपलब्ध असल्यास {crops} ला एक संरक्षित पाणी द्या. ओळींमध्ये पिकाच्या अवशेषांचे आच्छादन करा आणि पाऊस परत येईपर्यंत खताचा वरचा डोस थांबवा."
+  DRAINAGE_POSTPONE_FERTILIZER_SPRAY: "येत्या दिवसांत मुसळधार पावसाची शक्यता आहे. शेतातील चर उघडून {crops} मधील जास्तीचे पाणी काढून टाका, आणि पाऊस थांबेपर्यंत खताचा वरचा डोस व फवारणी पुढे ढकला - ती वाहून जाईल."
+  FLOOD_PREP: "अतिमुसळधार पावसाची शक्यता आहे आणि या जिल्ह्यात पूर येतो. आताच निचऱ्याचे चर साफ करा, पाणी देणे थांबवा, आणि काढलेले धान्य, बियाणे व खत उंच जागी हलवा."
+
+# The fixed queue the nightly reset restores: 7 heavy rain (urgent), 7 dry spell, 6 onset.
+# reason = the alert_policy.yaml rule that holds it for review.
+advisories:
+  # heavy rain - short lead, red: urgent
+  - {unit_id: IND.20.16.2_1, action: DRAINAGE_POSTPONE_FERTILIZER_SPRAY, hazard: heavy, horizon: 7, probability: 0.78, crops: [soybean, tur], urgent: true, reason: heavy_rain_short_lead}
+  - {unit_id: IND.20.6.3_1, action: FLOOD_PREP, hazard: heavy, horizon: 7, probability: 0.71, crops: [soybean, cotton], urgent: true, reason: flood_prep}
+  - {unit_id: IND.5.28.1_1, action: FLOOD_PREP, hazard: heavy, horizon: 7, probability: 0.83, crops: [paddy, maize], urgent: true, reason: flood_prep}
+  - {unit_id: IND.34.33.2_1, action: DRAINAGE_POSTPONE_FERTILIZER_SPRAY, hazard: heavy, horizon: 7, probability: 0.66, crops: [paddy], urgent: true, reason: heavy_rain_short_lead}
+  - {unit_id: IND.19.39.2_1, action: DRAINAGE_POSTPONE_FERTILIZER_SPRAY, hazard: heavy, horizon: 7, probability: 0.64, crops: [soybean, maize], urgent: true, reason: heavy_rain_short_lead}
+  - {unit_id: IND.20.6.7_1, action: DRAINAGE_POSTPONE_FERTILIZER_SPRAY, hazard: heavy, horizon: 7, probability: 0.52, crops: [cotton, soybean], urgent: false, reason: heavy_rain_short_lead}
+  - {unit_id: IND.34.33.1_1, action: DRAINAGE_POSTPONE_FERTILIZER_SPRAY, hazard: heavy, horizon: 14, probability: 0.63, crops: [paddy], urgent: false, reason: red_risk}
+  # dry spell
+  - {unit_id: IND.34.40.2_1, action: LIFE_SAVING_IRRIGATION_MULCH, hazard: dry, horizon: 14, probability: 0.74, crops: [urad, moong], urgent: false, reason: red_risk}
+  - {unit_id: IND.34.40.4_1, action: LIFE_SAVING_IRRIGATION_MULCH, hazard: dry, horizon: 14, probability: 0.69, crops: [urad, groundnut], urgent: false, reason: red_risk}
+  - {unit_id: IND.19.23.1_1, action: LIFE_SAVING_IRRIGATION_MULCH, hazard: dry, horizon: 7, probability: 0.81, crops: [soybean], urgent: false, reason: red_risk}
+  - {unit_id: IND.19.39.5_1, action: LIFE_SAVING_IRRIGATION_MULCH, hazard: dry, horizon: 21, probability: 0.62, crops: [soybean, maize], urgent: false, reason: red_risk}
+  - {unit_id: IND.20.16.5_1, action: LIFE_SAVING_IRRIGATION_MULCH, hazard: dry, horizon: 14, probability: 0.67, crops: [soybean, tur], urgent: false, reason: red_risk}
+  - {unit_id: IND.20.6.8_1, action: LIFE_SAVING_IRRIGATION_MULCH, hazard: dry, horizon: 28, probability: 0.61, crops: [bajra, tur], urgent: false, reason: red_risk}
+  - {unit_id: IND.5.10.1_1, action: LIFE_SAVING_IRRIGATION_MULCH, hazard: dry, horizon: 14, probability: 0.48, crops: [paddy], urgent: false, reason: low_confidence, confidence: low}
+  # onset
+  - {unit_id: IND.19.23.4_1, action: SOW_NOW, hazard: onset, horizon: 7, probability: 0.72, crops: [soybean, maize], urgent: false, reason: red_risk}
+  - {unit_id: IND.19.39.1_1, action: SOW_NOW, hazard: onset, horizon: 7, probability: 0.64, crops: [soybean], urgent: false, reason: red_risk}
+  - {unit_id: IND.20.16.1_1, action: DELAY_SOWING_10D, hazard: onset, horizon: 14, probability: 0.18, crops: [soybean, tur], urgent: false, reason: low_confidence, confidence: low}
+  - {unit_id: IND.20.6.1_1, action: DELAY_SOWING_10D, hazard: onset, horizon: 14, probability: 0.22, crops: [soybean, cotton], urgent: false, reason: low_confidence, confidence: low}
+  - {unit_id: IND.34.40.1_1, action: SWITCH_SHORT_DURATION, hazard: onset, horizon: 21, probability: 0.15, crops: [urad, moong], urgent: false, reason: low_confidence, confidence: low}
+  - {unit_id: IND.19.23.3_1, action: DELAY_SOWING_10D, hazard: onset, horizon: 14, probability: 0.25, crops: [soybean, maize], urgent: false, reason: low_confidence, confidence: low}

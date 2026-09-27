@@ -280,3 +280,12 @@ path that target uses instead of committed assets.
   `python -m src.build_crops --from-calendar`, `python scripts/build_live_assets.py`,
   `python scripts/build_public_map_assets.py` (SoI sub-districts + LGD block search index).
 - The national ML model (Stage 2) is "coming soon"; until then the live blend is EC46 only.
+
+## Evaluator demo account
+
+The sign-in page shows a demo login (from `DEMO_USERNAME` / `DEMO_PASSWORD`). The demo
+role can review, edit and approve alerts for the five validated regions, but works on demo
+copies only: its sends go to a mock outbox of invented subscribers, and it cannot open
+Settings. `python -m src.jobs.demo_reset [--db-url-env DATABASE_URL_CLOUD]` restores the
+20 demo advisories; `.github/workflows/demo-reset.yml` runs it nightly and needs the
+secrets `DATABASE_URL_CLOUD`, `DEMO_USERNAME` and `DEMO_PASSWORD`.

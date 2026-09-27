@@ -87,6 +87,8 @@ TEMP_RAMP = {
     "dark": ["#4F83AA", "#8FB9D2", "#3B4F5C", "#E9A25B", "#E0726A"],
 }
 
+BRAND_DIR = Path(__file__).resolve().parent / "static" / "brand"
+
 FONT_CSS = ("https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700"
             "&display=swap")
 
@@ -154,8 +156,9 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
 .stMarkdown, [data-testid="stMarkdownContainer"], [data-baseweb="popover"] * {
   font-family: "Mukta", system-ui, sans-serif !important;
 }
-[data-testid="stMain"] .block-container { padding-top: 0.5rem; padding-bottom: 2rem;
-  max-width: 1480px; }
+/* 8 px spacing scale; content column at most 1200 px; room for the fixed header. */
+[data-testid="stMain"] .block-container { padding-top: 4rem; padding-bottom: 2rem;
+  max-width: 1200px; }
 .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp p, .stApp li, .stApp label,
 .stApp span, [data-testid="stMarkdownContainer"] { color: var(--mo-ink); }
 .stApp h1 { font-size: 1.75rem; line-height: 2.125rem; font-weight: 700;
@@ -257,48 +260,83 @@ hr { border-color: var(--mo-line) !important; }
 .stApp [data-baseweb="select"] > div:focus-within,
 .stApp [data-baseweb="input"]:focus-within { outline: 3px solid var(--mo-focus); outline-offset: 1px; }
 
-/* ---- top bar ---- */
-.st-key-mo_topbar { border-bottom: 1px solid var(--mo-line); padding: 4px 0 6px;
-  margin-bottom: 4px; }
-.st-key-mo_topbar [data-testid="stPageLink"] a { padding: 2px 8px; border-radius: 4px; }
-.st-key-mo_topbar [data-testid="stPageLink"] a p { font-weight: 500; }
-.st-key-mo_topbar [data-testid="stPageLink"] a[aria-current="page"] p,
-.st-key-mo_topbar [data-testid="stPageLink"] a[data-active="true"] p {
-  color: var(--mo-primary) !important; text-decoration: underline; text-underline-offset: 6px;
-  text-decoration-thickness: 2px; }
-.mo-brand { display: inline-flex; align-items: center; gap: 8px; text-decoration: none !important;
-  white-space: nowrap; }
-.mo-brand .mo-mark { flex: none; }
-.mo-brand .mo-word { font-weight: 700; font-size: 1.1875rem; letter-spacing: .08em; color: var(--mo-ink);
-  padding-top: 2px; }
-.mo-brand .mo-app { font-weight: 500; font-size: .9375rem; color: var(--mo-muted); padding-left: 10px;
-  border-left: 1px solid var(--mo-line); }
+/* ---- header: logo + page menu (st.navigation, position="top") ---- */
+[data-testid="stHeader"] { background: var(--mo-surface) !important;
+  border-bottom: 1px solid var(--mo-line); }
+[data-testid="stHeaderLogo"] { height: 32px; max-width: 170px; }
+[data-testid="stTopNavLink"] { border-radius: 6px; padding: 4px 10px !important; }
+[data-testid="stTopNavLink"] *, [data-testid="stTopNavLink"] span { color: var(--mo-ink) !important; }
+[data-testid="stTopNavLink"]:hover { background: var(--mo-surface-2) !important; }
+[data-testid="stTopNavLink"][aria-current="page"],
+[data-testid="stTopNavLink"][data-active="true"] { background: var(--mo-primary-soft) !important; }
+[data-testid="stTopNavLink"][aria-current="page"] *,
+[data-testid="stTopNavLink"][data-active="true"] * { color: var(--mo-primary) !important; font-weight: 600; }
+[data-testid="stTopNavSection"] *, [data-testid="stNavSectionHeader"] * { color: var(--mo-ink) !important; }
+
+/* ---- slim bar under the header: who, sign out, language, dark mode ---- */
+.st-key-mo_topbar { border-bottom: 1px solid var(--mo-line); padding: 0 0 8px; margin-bottom: 8px;
+  row-gap: 8px !important; flex-wrap: wrap !important; }
 .st-key-mo_coverage button { border-radius: 999px !important; border-color: var(--mo-accent) !important;
   background: var(--mo-surface) !important; padding: 0 12px !important; min-height: 32px; }
 .st-key-mo_coverage button p { color: var(--mo-accent-ink) !important; font-weight: 600; }
-.st-key-mo_subnav { border-bottom: 1px solid var(--mo-line); padding-bottom: 4px; margin-bottom: 8px; }
-.st-key-mo_menu { display: none; }
-.st-key-mo_mtabs { display: none !important; }
 .st-key-mo_lang [data-testid="stButtonGroup"] button { min-height: 32px; padding: 0 10px; }
+.mo-who { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.mo-who-name { font-weight: 600; color: var(--mo-ink); }
+.mo-role { font-size: .8125rem; font-weight: 600; line-height: 1.2; padding: 2px 8px; border-radius: 999px;
+  border: 1px solid var(--mo-line-strong); color: var(--mo-ink); }
+.mo-role-admin { border-color: var(--mo-primary); color: var(--mo-primary) !important; }
+.mo-role-demo { background: var(--mo-primary-soft); border-color: var(--mo-primary); color: var(--mo-primary) !important; }
+.stApp .mo-page-desc { color: var(--mo-muted) !important; margin: -8px 0 16px; max-width: 72ch; font-size: 1rem; line-height: 1.5; }
 @media (max-width: 720px) {
-  .st-key-mo_links { display: none !important; }
-  .st-key-mo_menu { display: block; }
-  .mo-brand .mo-app { display: none; }
-  .st-key-mo_coverage { display: none !important; }   /* the coverage strip says it */
-  .st-key-mo_mtabs { display: flex !important; flex-wrap: nowrap !important; overflow-x: auto;
-    border-bottom: 1px solid var(--mo-line); padding-bottom: 4px; margin-bottom: 6px; }
-  .st-key-mo_mtabs [data-testid="stPageLink"] { flex: none; }
-  .st-key-mo_mtabs [data-testid="stPageLink"] a { white-space: nowrap; }
-  /* Icon-only Menu button on phones; the word stays for screen readers. */
-  .st-key-mo_menu button [data-testid="stMarkdownContainer"] { position: absolute; width: 1px;
-    height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .st-key-mo_topbar { flex-wrap: nowrap !important; gap: 8px !important; }
-  .st-key-mo_topbar > div:has(> .st-key-mo_links),
-  .st-key-mo_topbar > div:has(> .st-key-mo_menu),
-  .st-key-mo_topbar > div:has(> .st-key-mo_coverage) { display: none !important; }
-  .st-key-mo_menu { display: none !important; }          /* the tab row replaces it */
+  .st-key-mo_topbar > div:has(> .st-key-mo_coverage), .st-key-mo_coverage { display: none !important; }  /* the strip says it */
   .st-key-mo_lang [data-testid="stButtonGroup"] button { padding: 0 7px; min-width: 0; }
-  .mo-brand .mo-word { font-size: 1.0625rem; letter-spacing: .06em; }
+  .mo-who-name { max-width: 9rem; overflow: hidden; text-overflow: ellipsis; }
+  [data-testid="stHeaderLogo"] { max-width: 120px; }
+}
+
+/* ---- sign-in demo note: calm, bordered, no shadow ---- */
+.mo-demo-note { background: var(--mo-primary-soft); border: 1px solid var(--mo-line);
+  border-left: 4px solid var(--mo-primary); border-radius: 8px; padding: 12px 16px; }
+.mo-demo-note p { margin: 0 0 8px; line-height: 1.5; }
+.mo-demo-note p:last-child { margin-bottom: 0; }
+.mo-demo-title { font-weight: 600; }
+.mo-demo-note code { font-size: .9375rem; padding: 1px 6px; border-radius: 4px;
+  background: var(--mo-surface) !important; border: 1px solid var(--mo-line); }
+
+/* ---- officer cards: border, no shadow; urgent = red left rule ---- */
+.stApp [class*="st-key-card-"] { background: var(--mo-surface); border-radius: 8px;
+  padding: 16px !important; gap: 8px !important; }
+.stApp [class*="st-key-card-urgent-"] { border-left: 4px solid var(--mo-risk-high) !important; }
+.mo-card-head { display: flex; flex-direction: column; gap: 4px; }
+.mo-card-title { margin: 0 !important; padding: 0 !important; font-size: 1.125rem !important; }
+.mo-card-meta, .mo-card-why { margin: 0; line-height: 1.5; }
+.mo-card-meta { color: var(--mo-ink); }
+.stApp .mo-card-why { color: var(--mo-muted); }
+.mo-card-why b { color: var(--mo-ink); font-weight: 600; }
+.mo-urgent-flag, .mo-urgent-text { color: var(--mo-risk-high-ink) !important; font-weight: 600; }
+.mo-urgent-flag { font-size: .875rem; }
+.mo-queue-count { margin: 0 0 8px; }
+.stApp [class*="st-key-actions-"] [data-testid="stBaseButton-tertiary"] *,
+.stApp [class*="st-key-actions-"] [data-testid="stBaseButton-tertiary"] {
+  color: var(--mo-risk-high-ink) !important; }
+.stApp [class*="st-key-reject-row-"] [data-testid="stBaseButton-secondary"] {
+  border-color: var(--mo-risk-high-ink) !important; color: var(--mo-risk-high-ink) !important; }
+.stApp [class*="st-key-reject-row-"] [data-testid="stBaseButton-secondary"] * { color: var(--mo-risk-high-ink) !important; }
+.mo-empty { border: 1px dashed var(--mo-line-strong); border-radius: 8px; padding: 24px;
+  background: var(--mo-surface); max-width: 640px; }
+.mo-empty p { margin: 0; color: var(--mo-muted); }
+.mo-empty .mo-empty-title { color: var(--mo-ink); font-weight: 600; font-size: 1.0625rem; margin-bottom: 4px; }
+.mo-fresh { margin: 8px 0 16px; }
+.mo-fresh.mo-ok, .mo-fresh.mo-ok * { color: var(--mo-accent-ink) !important; }
+.mo-fresh.mo-stale, .mo-fresh.mo-stale * { color: var(--mo-risk-med-ink) !important; }
+[data-testid="stMetric"] { background: var(--mo-surface); border: 1px solid var(--mo-line);
+  border-radius: 8px; padding: 12px 16px; }
+
+/* Key numbers: one row on desktop, 2 x 2 on phones. */
+@media (max-width: 640px) {
+  .st-key-mo_metrics [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; gap: 8px !important; }
+  .st-key-mo_metrics [data-testid="stColumn"] { flex: 1 1 calc(50% - 8px) !important; min-width: calc(50% - 8px) !important; }
+  .st-key-mo_metrics [data-testid="stMetric"] { padding: 8px 12px; }
 }
 
 /* ---- coverage strip and footer ---- */
@@ -317,6 +355,7 @@ hr { border-color: var(--mo-line) !important; }
 /* ---- status + risk labels: icon + coloured text, never colour alone ---- */
 .mo-label { font-weight: 600; white-space: nowrap; }
 .mo-label .mo-ico { display: inline-block; width: 1.1em; text-align: center; }
+.stApp .mo-label span { color: inherit !important; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important;
@@ -324,20 +363,30 @@ hr { border-color: var(--mo-line) !important; }
 }
 """
 
-# Public pages hide Streamlit's menu, toolbar, deploy button, footer and status widget.
-_PUBLIC_CSS = """
-[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stMainMenu"],
-#MainMenu, [data-testid="stDecoration"], [data-testid="stStatusWidget"],
-[data-testid="stAppDeployButton"], .stDeployButton, footer,
-[data-testid="stSidebarCollapsedControl"], [data-testid="stSidebar"] { display: none !important; }
-[data-testid="stMain"] .block-container { padding-top: .25rem; }
+# Every page: Streamlit's header stays - it carries the logo and the page menu
+# (st.navigation, position="top") - but its main menu, Deploy button, status widget,
+# decoration line and the sidebar are hidden, as is Streamlit's own footer.
+_CHROME_CSS = """
+[data-testid="stMainMenu"], #MainMenu, [data-testid="stDecoration"],
+[data-testid="stStatusWidget"], [data-testid="stAppDeployButton"], .stDeployButton,
+[data-testid="stToolbarActions"], footer { display: none !important; }
+/* Phones: st.navigation(position="top") folds its menu into the sidebar - keep it. */
+[data-testid="stSidebar"], [data-testid="stSidebarContent"] { background: var(--mo-surface) !important;
+  border-right: 1px solid var(--mo-line); }
+[data-testid="stSidebarNavLink"] * , [data-testid="stSidebarNavSeparator"],
+[data-testid="stNavSectionHeader"] * { color: var(--mo-ink) !important; }
+[data-testid="stSidebarNavLink"][aria-current="page"] { background: var(--mo-primary-soft) !important; }
+[data-testid="stSidebarNavLink"][aria-current="page"] * { color: var(--mo-primary) !important; font-weight: 600; }
+[data-testid="stExpandSidebarButton"] *, [data-testid="stSidebarCollapseButton"] * { color: var(--mo-ink) !important; }
+/* The phone menu button says what it is: "☰ Menu" rather than a bare ">>". */
+[data-testid="stExpandSidebarButton"] { width: auto !important; padding: 0 12px !important; gap: 6px;
+  display: inline-flex !important; align-items: center; }
+[data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"] { display: none !important; }
+[data-testid="stExpandSidebarButton"]::before { content: "☰  Menu"; white-space: pre; font-weight: 600;
+  color: var(--mo-ink); font-family: "Mukta", system-ui, sans-serif; }
 """
-
-# Officer pages keep Streamlit's rerun control but lose the decoration line and sidebar.
-_OFFICER_CSS = """
-[data-testid="stHeader"] { background: transparent !important; height: 2.25rem; }
-[data-testid="stDecoration"], [data-testid="stAppDeployButton"], .stDeployButton,
-[data-testid="stSidebarCollapsedControl"], [data-testid="stSidebar"] { display: none !important; }
+_PUBLIC_CSS = _CHROME_CSS
+_OFFICER_CSS = _CHROME_CSS + """
 .stApp [data-testid="stMain"] { font-size: .9375rem; }
 """
 
@@ -391,9 +440,9 @@ STATUS_TEXT = {k: f"{v[0]} {v[1]}" for k, v in STATUS_LABELS.items()}
 # --------------------------------------------------------------------------
 STATIC = Path(__file__).resolve().parent / "static"
 PARTNER_LOGO = STATIC / "partners" / "moes-logo.png"
-HACKATHON = "Smart India Hackathon"
-CREDIT = ("Problem statement by the Ministry of Earth Sciences, Government of India, "
-          f"{HACKATHON}. Independent prototype, not an official government service.")
+HACKATHON = "Smart India Hackathon 2026"
+CREDIT = ("Problem statement by the Ministry of Earth Sciences, Government of India · "
+          f"{HACKATHON} · Independent prototype, not an official government service")
 
 
 def brand_mark(size: int = 28, label: str | None = None) -> str:
@@ -411,32 +460,67 @@ def brand_mark(size: int = 28, label: str | None = None) -> str:
 # --------------------------------------------------------------------------
 # Top bar
 # --------------------------------------------------------------------------
-def top_bar(pages: dict, user=None) -> None:
-    """Slim bar: VRRTANTA logo + app name, coverage badge, links, Dark mode, sign in.
+def logo() -> None:
+    """The VRRTANTA lockup in Streamlit's header, left of the page menu; it links Home.
 
-    `pages` maps a short name to its st.Page so links are real navigation. On phones
-    the links collapse into a Menu popover (CSS, .st-key-mo_menu).
-    """
+    st.logo only accepts an absolute link, so Home is rebuilt from the request URL."""
+    name = "vrrtanta-logo-dark.svg" if is_dark() else "vrrtanta-logo.svg"
+    link = None
+    try:
+        from urllib.parse import urlsplit
+
+        parts = urlsplit(str(st.context.url or ""))
+        if parts.scheme and parts.netloc:
+            link = f"{parts.scheme}://{parts.netloc}/"
+    except Exception:
+        link = None
+    # No icon_image: it replaces the full lockup whenever the sidebar is closed, and this
+    # app has no sidebar.
+    st.logo(str(BRAND_DIR / name), size="large", link=link)
+
+
+def sign_out(pages: dict) -> None:
+    """Forget the signed-in user and everything they had open, then go Home.
+
+    Sign-in lives only in session state (there is no auth cookie), so clearing it is the
+    whole sign-out. The viewer's language and light/dark choice are kept."""
+    from app.common import current_user, log
+
+    user = current_user()
+    if user is not None:
+        log(user.username, "logout", "user", user.username,
+            "[demo]" if getattr(user, "role", "") == "demo" else None)
+    keep = {k: st.session_state[k] for k in ("dark", "lang") if k in st.session_state}
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.session_state.update(keep)
+    st.switch_page(pages["home"])
+
+
+def top_bar(pages: dict, user=None) -> None:
+    """The slim bar under Streamlit's header, on every page: coverage, who is signed in
+    (with a role badge, and "Demo mode" for the evaluator account), Sign out or Sign in,
+    language, Dark mode. Page links live in the header (st.navigation, position="top")."""
+    from app.i18n import LANGS, t
+
     is_dark()                                   # seed the toggle from the browser
     with st.container(key="mo_topbar", horizontal=True, vertical_alignment="center",
                       gap="small"):
-        st.html(f"<a class='mo-brand' href='./' target='_self' "
-                f"aria-label='VRRTANTA Monsoon outlook, home'>{brand_mark(30)}"
-                f"<span class='mo-word'>VRRTANTA</span>"
-                f"<span class='mo-app'>Monsoon outlook</span></a>", width="content")
-        from app.i18n import LANGS, t
-
         with st.popover(t("coverage_badge"), key="mo_coverage"):
             st.markdown(t("coverage"))
         st.space("stretch")
+        if user is None:
+            st.page_link(pages["signin"], label=t("sign_in"), icon=":material/login:")
+        else:
+            from app.permissions import badge
 
-        with st.container(key="mo_links", horizontal=True, gap="small",
-                          vertical_alignment="center", width="content"):
-            _links(pages, user)
-        with st.container(key="mo_menu", width="content"):
-            with st.popover("Menu", icon=":material/menu:"):
-                _links(pages, user, stacked=True)
-
+            role = getattr(user, "role", "officer")
+            st.html(f"<span class='mo-who'><span class='mo-who-name'>{_esc(user.name)}</span>"
+                    f"<span class='mo-role mo-role-{_esc(role)}'>{_esc(badge(user))}</span>"
+                    "</span>", width="content")
+            if st.button(t("sign_out"), key="mo_signout", icon=":material/logout:",
+                         type="tertiary"):
+                sign_out(pages)
         if "lang" not in st.session_state:
             st.session_state["lang"] = "en"
         with st.container(key="mo_lang", width="content"):
@@ -445,50 +529,18 @@ def top_bar(pages: dict, user=None) -> None:
                                  key="lang", label_visibility="collapsed", required=True,
                                  help=" / ".join(LANGS.values()))
         st.toggle(f":material/dark_mode: {t('dark_mode')}", key="dark")
-    # Phones: the four tabs as a scrollable row under the bar (the approved wireframe).
-    with st.container(key="mo_mtabs", horizontal=True, gap="small"):
-        st.page_link(pages["home"], label=t("tab_map"))
-        st.page_link(pages["outlook"], label=t("tab_30"))
-        st.page_link(pages["accuracy"], label=t("tab_accuracy"))
-        st.page_link(pages["about"], label=t("tab_about"))
-        if user is None:
-            st.page_link(pages["signin"], label=t("sign_in"))
-        else:
-            st.page_link(pages["overview"], label="Officer portal")
 
 
-def _links(pages: dict, user, stacked: bool = False) -> None:
-    from app.i18n import t
+def _esc(text) -> str:
+    import html
 
-    st.page_link(pages["home"], label=t("tab_map"))
-    st.page_link(pages["outlook"], label=t("tab_30"))
-    st.page_link(pages["accuracy"], label=t("tab_accuracy"))
-    st.page_link(pages["about"], label=t("tab_about"))
-    if user is None:
-        st.page_link(pages["signin"], label=t("sign_in"),
-                     icon=":material/login:")
-    else:
-        st.page_link(pages["overview"], label="Officer portal",
-                     icon=":material/badge:")
-        if st.button("Sign out", key=f"mo_signout_{'m' if stacked else 'd'}",
-                     type="tertiary"):
-            from app.common import log
-
-            log(user.username, "logout", "user", user.username)
-            st.session_state.pop("user", None)
-            st.switch_page(pages["home"])
+    return html.escape(str(text or ""))
 
 
-def officer_subnav(pages: dict, user) -> None:
-    """Second row on officer pages: where you are in the portal and who you are."""
-    with st.container(key="mo_subnav", horizontal=True, vertical_alignment="center",
-                      gap="small"):
-        for name in ("overview", "risk_map", "approvals", "custom_alert", "outbox",
-                     "models"):
-            st.page_link(pages[name])
-        scope = "all states" if user.role == "admin" else ", ".join(user.states())
-        st.space("stretch")
-        st.caption(f"{user.name} · {user.role} · {scope}")
+def page_header(title: str, description: str) -> None:
+    """Page title plus the one line that says what the page is for."""
+    st.title(title)
+    st.html(f"<p class='mo-page-desc'>{_esc(description)}</p>")
 
 
 def footer(extra: str = "") -> None:

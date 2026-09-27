@@ -11,11 +11,11 @@ import streamlit as st
 from app import public_data as pdata
 from app import unit_detail
 from app.i18n import lang, t
-from app.theme import footer, tokens
+from app.theme import footer, page_header, tokens
 
 code = lang()
 run = pdata.live_run()
-st.title(t("tab_30"))
+page_header(t("tab_30"), t("desc_30"))
 if run is None:
     st.info(t("empty_no_run"), icon=":material/schedule:")
     footer()

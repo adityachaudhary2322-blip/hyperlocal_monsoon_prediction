@@ -121,3 +121,10 @@ tier_light: Experimental (lighter)
 tier_hatched: Low confidence (hatched)
 boundaries_note: Boundaries indicative, not official
 next_label: "next {span}"
+nav_home: Home
+nav_officer: Officer portal
+sign_out: Sign out
+effects: Effects
+home_title: "Monsoon outlook for India"
+desc_home: "Chance of dry spells and heavy rain for the next 1 to 4 weeks, for every sub-district. Pick an area to see its forecast and crop advice."
+desc_30: "The next four weeks for one area: rain expected, risks each week, crops and approved advice."
