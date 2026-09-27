@@ -32,6 +32,8 @@ PUBLIC_MODULES = [
     ROOT / "app" / "public_data.py",
     ROOT / "app" / "components" / "public_map.py",
     ROOT / "app" / "unit_detail.py",
+    ROOT / "app" / "scenes.py",
+    ROOT / "app" / "components" / "scene_header.py",
     *sorted((ROOT / "app" / "pages" / "public").glob("*.py")),
 ]
 ALLOWED_MODELS = {"Unit", "ForecastRun", "Forecast", "Advisory", "WeatherNow",

@@ -12,7 +12,7 @@ import streamlit as st
 
 from app import public_data as pdata
 from app.i18n import lang, t
-from app.theme import footer, tokens
+from app.theme import footer, tokens, page_header
 from src.accuracy import score, sentences, verdict
 from src.common import load_config
 
@@ -24,7 +24,7 @@ VERDICT = {"better": ("✓", "accent-ink", "Better than the historical average")
            "worse": ("✕", "risk-high-ink", "Worse than the historical average"),
            "not enough data": ("·", "muted", "Not enough data")}
 
-st.title(t("tab_accuracy"))
+page_header(t("tab_accuracy"), t("desc_accuracy"))
 st.html("<p class='mo-prose mo-lede'>We do not publish one overall accuracy figure: for a rare "
         "event, always saying “no” would look over 90% accurate while never warning anyone. "
         "Instead, each hazard and week is compared with the historical average for that time "

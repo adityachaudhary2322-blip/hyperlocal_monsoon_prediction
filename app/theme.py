@@ -339,6 +339,18 @@ hr { border-color: var(--mo-line) !important; }
   .st-key-mo_metrics [data-testid="stMetric"] { padding: 8px 12px; }
 }
 
+/* ---- seasonal scene band: the real title is kept for screen readers ---- */
+.st-key-mo_hero { position: relative; gap: 0 !important; margin-bottom: 8px; }
+.st-key-mo_hero [data-testid="stHeading"], .st-key-mo_hero h1 { position: absolute !important;
+  width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; padding: 0; }
+.stApp .mo-desc-under { position: absolute !important; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; }
+.st-key-mo_scene_menu button { min-height: 32px; padding: 0 10px !important; }
+@media (max-width: 640px) {
+  .stApp .mo-desc-under { position: static !important; width: auto; height: auto; clip: auto;
+    white-space: normal; margin: 8px 0 16px; }
+}
+
 /* ---- coverage strip and footer ---- */
 .mo-strip { background: var(--mo-primary-soft); color: var(--mo-ink); border-left: 4px solid var(--mo-accent);
   padding: 8px 12px; margin: 4px 0 10px; font-size: .95rem; line-height: 1.4; }
@@ -529,6 +541,21 @@ def top_bar(pages: dict, user=None) -> None:
                                  key="lang", label_visibility="collapsed", required=True,
                                  help=" / ".join(LANGS.values()))
         st.toggle(f":material/dark_mode: {t('dark_mode')}", key="dark")
+        _scene_controls()
+
+
+def _scene_controls() -> None:
+    """Scene menu (Monsoon default, Auto by season, each season, Classic) and Effects."""
+    from app import scenes
+    from app.i18n import t
+
+    scenes.choice(); scenes.effects_on()            # seed defaults before the widgets
+    with st.container(key="mo_scene_ctl", horizontal=True, gap="small", width="content",
+                      vertical_alignment="center"):
+        with st.popover(t("scene_menu"), icon=":material/landscape:", key="mo_scene_menu"):
+            st.radio(t("scene_menu"), scenes.cfg()["choices"], key="scene",
+                     format_func=lambda c: t(f"scene_{c}"), label_visibility="collapsed")
+        st.toggle(t("effects"), key="effects", help=t("effects_help"))
 
 
 def _esc(text) -> str:
@@ -537,10 +564,40 @@ def _esc(text) -> str:
     return html.escape(str(text or ""))
 
 
-def page_header(title: str, description: str) -> None:
-    """Page title plus the one line that says what the page is for."""
-    st.title(title)
-    st.html(f"<p class='mo-page-desc'>{_esc(description)}</p>")
+def page_header(title: str, description: str, *, forecast_mode: str | None = None) -> None:
+    """Page title plus the one line that says what the page is for, over the seasonal
+    scene band (app/scenes.py) - or plain, when the viewer picked "Classic".
+
+    The real st.title stays in the page (screen readers, tests); the band draws the same
+    words aria-hidden over the scene. Public pages animate (unless Effects is off or the
+    viewer prefers reduced motion); officer pages get a faint, still frame.
+    `forecast_mode` (none / light / heavy / clear) ties the scene to a selected area."""
+    from app import scenes
+    from app.i18n import t
+
+    scene = scenes.resolve(scenes.choice())
+    if scene == "classic":
+        st.title(title)
+        st.html(f"<p class='mo-page-desc'>{_esc(description)}</p>")
+        return
+
+    from app.components.scene_header import scene_header
+
+    cfg = scenes.cfg()
+    public = bool(st.session_state.get("_mo_public", True))
+    dark = is_dark()
+    with st.container(key="mo_hero"):
+        st.title(title)
+        scene_header({
+            "scene": scene, "title": title, "desc": description, "dark": dark,
+            "animate": public and scenes.effects_on(), "faint": not public,
+            "mode": forecast_mode if public else None,
+            "caption": t("scene_caption") if public and forecast_mode else "",
+            "ink": TOKENS[mode()]["ink"], "ink_soft": "#C3D0D9" if dark else "#3E4E59",
+            "height": cfg["band_height"]["desktop"], "height_phone": cfg["band_height"]["phone"],
+            "cfg": {k: cfg[k] for k in ("particles", "rain_intensity", "fps", "idle_stop_seconds")},
+        })
+    st.html(f"<p class='mo-page-desc mo-desc-under'>{_esc(description)}</p>")
 
 
 def footer(extra: str = "") -> None:

@@ -15,6 +15,7 @@ import streamlit as st
 from app import public_data as pdata
 from app import unit_detail
 from app.components.public_map import public_map, selection
+from app import scenes
 from app.i18n import bundle, lang, span, t
 from app.theme import page_header, RAIN_RAMP, TEMP_RAMP, footer, mode, tokens
 from src.common import regions
@@ -42,7 +43,8 @@ url_unit = st.query_params.get("unit", "")
 if "unit" not in state and url_unit:
     sel["unit"] = url_unit                 # first load from a shared link
 
-page_header(t("home_title"), t("desc_home"))
+page_header(t("home_title"), t("desc_home"),
+            forecast_mode=scenes.unit_forecast_mode(sel.get("unit")))
 st.html(f"<div class='mo-strip mo-prose' role='note'>{html.escape(t('coverage'))}</div>")
 
 run = pdata.live_run()

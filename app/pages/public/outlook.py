@@ -10,12 +10,14 @@ import streamlit as st
 
 from app import public_data as pdata
 from app import unit_detail
+from app import scenes
 from app.i18n import lang, t
 from app.theme import footer, page_header, tokens
 
 code = lang()
 run = pdata.live_run()
-page_header(t("tab_30"), t("desc_30"))
+_picked = st.query_params.get("unit") or (st.session_state.get("mo_map") or {}).get("unit")
+page_header(t("tab_30"), t("desc_30"), forecast_mode=scenes.unit_forecast_mode(_picked))
 if run is None:
     st.info(t("empty_no_run"), icon=":material/schedule:")
     footer()

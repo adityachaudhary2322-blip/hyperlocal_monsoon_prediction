@@ -576,3 +576,26 @@ alerts with `source = "demo"`, subscribers with phones starting `+9100000`. The 
 exclude all three; a demo send is always mock and reaches only demo subscribers. Every
 demo audit entry starts "[demo]". `tests/test_demo.py` plants real rows beside demo rows
 and checks both directions.
+
+## 21. Seasonal header scenes (2026-09-28)
+
+Every page's `theme.page_header` draws a scene band (`app/components/scene_header.*`,
+`app/scenes.py`, `config/scenes.yaml`): animated on public pages and Sign in, faint and
+still on officer pages. The top bar's **Scene** menu offers Monsoon (default), Auto (by
+season, Asia/Kolkata), Harvest, Himalayan winter, Spring, Summer and **Classic** (the plain
+title, no band); **Effects** off shows a still frame. Vector shapes only - no images.
+On Home / Next 30 days a selected area drives it: rain none/light/heavy from
+`rain_next_7d`, clear skies when the week-1 dry-spell chance is >= 60%, with a caption.
+
+- The real `st.title` stays in the page (screen readers, AppTest); the band draws the same
+  words aria-hidden over a scrim. `data-contrast` on `.mo-scene` is the worst measured
+  title contrast (all scenes 5.5-14:1, 2026-09-28).
+- Caps: 150 particles desktop / 60 phone, 30 fps, paused when hidden or scrolled away,
+  stopped after 60 s idle (resumes on scroll/click/keys), static under reduced motion.
+- **Streamlit 1.64 did not inject this v2 component's `css`**, so the stylesheet travels
+  inside the JS and is added to `<head>` once. Without it the canvas takes its pixel size
+  and a ResizeObserver grows the band without bound.
+- JS `%` keeps the sign: drifting particles need `((x % m) + m) % m`, or the rain walks
+  off the left edge within seconds.
+- `_component()` is cached; a new runtime (each AppTest) has its own registry, so
+  `scene_header` re-declares on "not registered".

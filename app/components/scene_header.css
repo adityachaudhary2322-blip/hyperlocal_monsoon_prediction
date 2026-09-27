@@ -1,0 +1,24 @@
+/* The band sizes itself; the canvas and text fill it. Colours come from --mo-* tokens. */
+.mo-scene { position: relative; height: var(--mo-scene-h, 180px); overflow: hidden; border-radius: 8px;
+  background: var(--mo-surface-2); margin: 0; }
+.mo-scene-canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0;
+  transition: opacity .6s ease; }
+.mo-scene-canvas.mo-scene-in { opacity: 1; }
+.mo-scene-faint .mo-scene-canvas.mo-scene-in { opacity: .35; }
+.mo-scene-text { position: absolute; left: 24px; right: 24px; top: 50%; transform: translateY(-50%);
+  max-width: 640px; font-family: "Mukta", system-ui, sans-serif; }
+.mo-scene-title { margin: 0; font-size: 1.75rem; line-height: 2.125rem; font-weight: 700; }
+.mo-scene-desc { margin: 4px 0 0; font-size: 1rem; line-height: 1.5; }
+.mo-scene-cap { position: absolute; right: 12px; bottom: 8px; margin: 0; font-size: .8125rem; line-height: 1.3;
+  padding: 2px 8px; border-radius: 999px; background: var(--mo-surface); color: var(--mo-ink);
+  border: 1px solid var(--mo-line); font-family: "Mukta", system-ui, sans-serif; }
+.mo-scene-faint { height: calc(var(--mo-scene-h, 180px) * .6); }
+@media (max-width: 640px) {
+  .mo-scene { height: var(--mo-scene-h-phone, 120px); }
+  .mo-scene-faint { height: calc(var(--mo-scene-h-phone, 120px) * .8); }
+  .mo-scene-text { left: 16px; right: 16px; top: 16px; transform: none; }
+  .mo-scene-title { font-size: 1.375rem; line-height: 1.75rem; }
+  .mo-scene-desc { display: none; }            /* shown under the band instead */
+  .mo-scene-cap { right: 8px; bottom: 6px; font-size: .75rem; }
+}
+@media (prefers-reduced-motion: reduce) { .mo-scene-canvas { transition: none; } }

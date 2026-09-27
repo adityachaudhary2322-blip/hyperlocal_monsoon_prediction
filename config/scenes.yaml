@@ -1,0 +1,33 @@
+# Seasonal header scenes (app/scenes.py, app/components/scene_header.*).
+# Drawn with vector shapes on a canvas - no images. Every page gets the band: animated
+# on public pages and Sign in, a faint still frame on officer pages.
+
+# The viewer's choice in the top bar's Scene menu. "monsoon" is the default (rain over
+# paddy); "auto" picks by date in Asia/Kolkata; "classic" is the plain look, no scene.
+default: monsoon
+choices: [monsoon, auto, harvest, winter, spring, summer, classic]
+
+# auto: month (1-12, IST) -> scene
+months:
+  monsoon: [6, 7, 8, 9]
+  harvest: [10, 11]
+  winter: [12, 1, 2]
+  spring: [3, 4]
+  summer: [5]
+
+# The forecast link (Home and Next 30 days, once an area is selected). Rain expected
+# over the next 7 days (mm, short-range forecast averaged over the sub-district):
+rain_mm:
+  light_from: 5          # below: no rain drawn
+  heavy_from: 50         # IMD calls 64.5 mm in one day "heavy"; 50 mm over a week of
+                         # steady monsoon rain already reads as a wet week
+# A high chance of a dry spell in week 1 shows clear skies, even in the monsoon.
+dry_clear_from: 0.60     # same as the red band in rules.yaml
+
+band_height: {desktop: 180, phone: 120}
+particles: {desktop: 150, phone: 60}
+rain_intensity: {none: 0.0, light: 0.35, heavy: 1.0}
+fps: 30
+idle_stop_seconds: 60    # stop after this long without scroll/click/keys; resume on either
+fade_in_ms: 600
+officer_opacity: 0.35    # officer pages: a faint, still frame

@@ -10,7 +10,7 @@ import streamlit as st
 import html
 
 from app.i18n import t
-from app.theme import brand_mark, footer
+from app.theme import brand_mark, footer, page_header
 
 STATIC = Path(__file__).resolve().parents[2] / "static"
 
@@ -29,7 +29,7 @@ try:
 except (OSError, ValueError):
     boundary = {"official": False}
 
-st.title("About this outlook")
+page_header("About this outlook", t("desc_about"))
 st.html(f"<p class='mo-prose mo-lede'>A 1 to 4 week outlook for the monsoon for every "
         f"sub-district of India: when it is likely to arrive or withdraw, and the chance of "
         f"a dry spell or heavy rain. {html.escape(t('coverage'))}</p>")

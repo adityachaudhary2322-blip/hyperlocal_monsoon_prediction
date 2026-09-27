@@ -91,6 +91,7 @@ if user is not None and (st.session_state.pop("mo_after_login", None)
     st.switch_page(pages["overview"])
 
 is_public = current.url_path in {pages[k].url_path for k in (*PUBLIC, "signin")}
+st.session_state["_mo_public"] = is_public       # the scene band animates only here
 apply_theme(public=is_public)
 logo()
 top_bar(pages, user)
