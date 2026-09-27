@@ -56,3 +56,8 @@ Thumbs.db
 # stay out - they are large and regenerable from the pipeline.
 !outputs/figs/*.png
 !outputs/metrics/*.csv
+
+# Runtime copies of the weather_grid table (app/public_data.py writes them on the server;
+# src.jobs.weather_grid --write-static writes them locally). Regenerated every 6 h.
+app/static/wind.json
+app/static/rain_forecast.json

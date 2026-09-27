@@ -21,6 +21,9 @@ import streamlit as st
 from streamlit_folium import st_folium
 
 from app.common import RISK_COLOURS, require_login, risk_chip, visible_states
+from app.theme import status_label
+
+RISK_TINTS = {"green": "#DCEFE3", "amber": "#F8E8C4", "red": "#F4D5D2"}
 from src.db.models import Advisory, Forecast, ForecastRun, Unit
 from src.db.session import get_session
 
@@ -32,7 +35,7 @@ MAP_LAYERS = ASSETS / "map_layers_simplified.gpkg"
 MAP_LAYER_NAME = "units"
 
 user = require_login()
-st.title("Risk Map")
+st.title("Risk map")
 
 
 @st.cache_data(show_spinner="Loading map layer...", max_entries=2, ttl=3600)
@@ -211,13 +214,15 @@ with right:
 
         # Cells are coloured in CSS rather than with Styler.background_gradient,
         # which would pull matplotlib into the hosted dependency set for one colormap.
+        # Tints of the risk colours with ink text: the full-strength fills fail
+        # WCAG AA under dark text, and the % in every cell carries the value anyway.
         def risk_css(value: float) -> str:
             if pd.isna(value):
-                return "color:#8a8a85"
-            colour = (RISK_COLOURS["red"] if value > 0.6
-                      else RISK_COLOURS["amber"] if value >= 0.3
-                      else RISK_COLOURS["green"])
-            return f"background-color:{colour};color:#11110f"
+                return "color:#5B6B76"
+            tint = (RISK_TINTS["red"] if value > 0.6
+                    else RISK_TINTS["amber"] if value >= 0.3
+                    else RISK_TINTS["green"])
+            return f"background-color:{tint};color:#1C2B36;font-weight:600"
 
         st.dataframe(
             table.style.format("{:.0%}", na_rep="-").map(risk_css),
@@ -232,8 +237,8 @@ with right:
             record = advisory.iloc[0]
             st.markdown(
                 f"**{record['action']}** &nbsp; {risk_chip(record['risk_level'])} "
-                f"&nbsp; <span style='color:#52514e'>confidence "
-                f"{record['confidence']} · {record['status']}</span>",
+                f"&nbsp; <span style='color:var(--mo-muted)'>confidence "
+                f"{record['confidence']}</span> &nbsp; {status_label(record['status'])}",
                 unsafe_allow_html=True,
             )
             if record.get("status_reason"):

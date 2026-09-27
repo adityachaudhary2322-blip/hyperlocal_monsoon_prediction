@@ -1,0 +1,54 @@
+# National weather layer for the public dashboard (src/jobs/weather.py).
+#
+# Source: Open-Meteo forecast API, https://open-meteo.com/en/docs
+# Licence: data CC BY 4.0 - the site footer carries "Weather data by Open-Meteo.com".
+# Terms: the keyless free API is for non-commercial use, 10,000 calls/day, 5,000/hour,
+# 600/minute (https://open-meteo.com/en/terms, checked 2026-09-27). Each location in a
+# multi-location request counts as one call; ~734 districts x 8 runs/day = ~5,900 calls.
+
+endpoint: https://api.open-meteo.com/v1/forecast
+
+# Locations per request. Open-Meteo accepts comma-separated coordinate lists; 100 keeps
+# the URL short (~3 kB) and a failed batch cheap to retry.
+batch_size: 100
+
+# Seconds between batches: 8 batches spaced 3 s apart is ~250 locations/minute, well
+# under the 600/minute limit even if two runs overlap.
+pause_seconds: 3
+
+# Retries on 429 / 5xx / network errors, with exponential backoff from this base.
+retries: 4
+backoff_seconds: 5
+timeout_seconds: 60
+
+# A run that returns fewer than this share of districts is a failure: the previous
+# values are kept rather than replaced with a partial map.
+min_coverage: 0.9
+
+# 24 h and 7 d totals are summed from hourly precipitation starting at the current hour.
+forecast_hours: 168
+
+# The district list; built by scripts/build_public_map_assets.py from the Survey of India
+# district layer, so weather and the map share one set of names.
+centroids: app/static/district_centroids.csv
+
+# --------------------------------------------------------------------------------------
+# Animation grid (src/jobs/weather_grid.py, every 6 h from .github/workflows/weather-grid.yml)
+#
+# lat 5-38 x lon 65-100 at 1.5 deg = 23 x 24 = 552 points. One request per point fetches
+# 850 hPa wind, 72 h of hourly rain and 7 days of daily rain: 4 variables over 7 days is
+# weight 1, so 552 calls per run x 4 runs = 2,208 calls/day. With the district job
+# (734 x 8 = 5,872) the total is ~8,080/day, under the 10,000 free limit.
+grid:
+  lat_min: 5.0
+  lat_max: 38.0
+  lon_min: 65.0
+  lon_max: 100.0
+  step: 1.5
+  hours: 72            # hourly rain frames for the playback
+  days: 7              # daily totals; days 4-7 extend the playback
+  batch_size: 100
+  pause_seconds: 12    # 6 batches spaced 12 s apart = 500 locations/minute, under 600
+  min_coverage: 0.95
+  # 850 hPa is the monsoon low-level jet; 10 m wind is the fallback if the model lacks it.
+  wind_levels: [850hPa, 10m]

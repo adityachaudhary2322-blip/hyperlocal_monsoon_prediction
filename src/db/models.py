@@ -277,6 +277,75 @@ class Setting(Base):
     updated_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
+# --------------------------------------------------------------------------
+# National weather (public dashboard). Written by src/jobs/weather.py.
+# --------------------------------------------------------------------------
+class WeatherNow(Base):
+    """Latest Open-Meteo values per Survey of India district, one row each.
+
+    Replaced wholesale by a successful fetch and left alone by a failed one, so the
+    public page always has the last good values plus the time they were fetched.
+    """
+
+    __tablename__ = "weather_now"
+
+    state: Mapped[str] = mapped_column(String(128), primary_key=True)
+    district: Mapped[str] = mapped_column(String(128), primary_key=True)
+    state_key: Mapped[str] = mapped_column(String(64), index=True)
+    lat: Mapped[float] = mapped_column(Float)
+    lon: Mapped[float] = mapped_column(Float)
+    valid_utc: Mapped[dt.datetime] = mapped_column(UTCDateTime)
+    fetched_utc: Mapped[dt.datetime] = mapped_column(UTCDateTime, index=True)
+    temp_c: Mapped[float | None] = mapped_column(Float, nullable=True)
+    precip_24h_mm: Mapped[float | None] = mapped_column(Float, nullable=True)
+    precip_7d_mm: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
+class WeatherState(Base):
+    """State means of weather_now, written in the same transaction."""
+
+    __tablename__ = "weather_state"
+
+    state_key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    state: Mapped[str] = mapped_column(String(128))
+    n_districts: Mapped[int] = mapped_column(Integer)
+    fetched_utc: Mapped[dt.datetime] = mapped_column(UTCDateTime)
+    temp_c: Mapped[float | None] = mapped_column(Float, nullable=True)
+    precip_24h_mm: Mapped[float | None] = mapped_column(Float, nullable=True)
+    precip_7d_mm: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
+class WeatherFetch(Base):
+    """One row per job run, successful or not - the public page reads the last ok one."""
+
+    __tablename__ = "weather_fetch"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    started_utc: Mapped[dt.datetime] = mapped_column(UTCDateTime, default=utcnow,
+                                                     index=True)
+    ok: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    n_districts: Mapped[int] = mapped_column(Integer, default=0)
+    n_expected: Mapped[int] = mapped_column(Integer, default=0)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class WeatherGrid(Base):
+    """Latest gridded animation data (wind.json, rain_forecast.json) as JSON text.
+
+    Written every 6 h by src/jobs/weather_grid.py from GitHub Actions. Kept in the
+    database rather than committed to app/static/, because a commit every 6 hours would
+    redeploy the hosted app four times a day and grow the repo by ~0.5 MB each time. The
+    app copies the payload into app/static/ on its own disk (app/public_data.py).
+    """
+
+    __tablename__ = "weather_grid"
+
+    name: Mapped[str] = mapped_column(String(64), primary_key=True)
+    payload: Mapped[str] = mapped_column(Text)
+    fetched_utc: Mapped[dt.datetime] = mapped_column(UTCDateTime)
+    n_points: Mapped[int] = mapped_column(Integer)
+
+
 class AuditLog(Base):
     __tablename__ = "audit_log"
 

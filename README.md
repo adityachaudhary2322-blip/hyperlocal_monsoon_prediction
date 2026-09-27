@@ -94,11 +94,47 @@ first run. It reads every parquet **before** importing AutoGluon: on this machin
 train 1990–2018 · validate 2019–2021 · test 2022 onward. Climatology uses training
 years only.
 
+## Public dashboard
+
+The front page (`app/pages/public/home.py`) is public: a MapLibre globe with national
+weather, monsoon risk for the 5 covered states, three data-driven animations, and an
+About page. Officer pages appear only after **Sign in (officers)**.
+
+```powershell
+# Map files in app/static/ (served by Streamlit static serving). Uses the Survey of India
+# download in data/raw/official_boundary/ if present, else the SoI mirror (see below).
+.venv\Scripts\python.exe scripts\build_public_map_assets.py
+.venv\Scripts\python.exe scripts\build_onset_replay.py     # monsoon-advance replay, 2022-2025
+.venv\Scripts\python.exe scripts\export_models.py --skill-only   # model_skill.csv for Home
+# National weather (3-hourly) and the animation grid (6-hourly), into the database:
+.venv\Scripts\python.exe -m src.jobs.weather
+.venv\Scripts\python.exe -m src.jobs.weather_grid --write-static
+```
+
+**Official boundaries.** Survey of India publishes *Digital Vector Data 1:1M* free on
+[onlinemaps.surveyofindia.gov.in](https://onlinemaps.surveyofindia.gov.in/Digital_Product_Show.aspx),
+but the download needs a signed-in account. Download **OVSF/1M/7** ("Entire country up to
+district level with HQ"), unzip it into `data/raw/official_boundary/`, and rerun
+`build_public_map_assets.py`. Until then the build uses the same SoI layers from the
+[india-geodata](https://github.com/yashveeeeeeer/india-geodata) mirror
+(`data/raw/boundary_mirror/SOI_{States,Districts}.parquet`, release tags `admin/states`
+and `admin/districts`) and the map says "Boundaries indicative, not official".
+
+**GitHub Actions.** `.github/workflows/weather.yml` (every 3 h) and `weather-grid.yml`
+(every 6 h) keep the public map current while the laptop is off. Add one repository
+secret, **`DATABASE_URL_CLOUD`** (Settings → Secrets and variables → Actions); the jobs
+read it by name through `--db-url-env`. They install only `requirements-weather.txt`.
+Open-Meteo budget: ~8,080 calls/day of the free 10,000 (non-commercial use; data CC BY 4.0,
+credited in the footer).
+
+**Partner logo.** `app/static/partners/` is empty on purpose. The footer shows a partner
+logo only if a file named `moes-logo.png` is placed there by hand.
+
 ## Deploying to Streamlit Community Cloud
 
 Entry file **`app/main.py`**. The free tier gives ~2.7 GB of RAM, no persistent disk,
-and secrets through `st.secrets`. The site serves the control panel only; the data
-pipeline and Chronos-2 stay on the laptop.
+and secrets through `st.secrets`. The site serves the public dashboard and the officer
+portal; the data pipeline and Chronos-2 stay on the laptop.
 
 ### Two dependency files
 
@@ -118,6 +154,8 @@ across the two files, or if the website file grows a package it does not need.
 | LightGBM boosters + isotonic breakpoints + feature rows | `app/assets/models/`, committed (4.0 MB) | Streamlit Cloud deploys from git; there is no model registry |
 | Sub-district polygons | `app/assets/map_layers_simplified.gpkg`, committed (2.1 MB) | read one state at a time |
 | Secrets | **App settings → Secrets** | see `.streamlit/secrets.toml.example` |
+| Public map GeoJSON, search index, onset replay, brand files | `app/static/`, committed (~4 MB) | served by `server.enableStaticServing`, loaded one state at a time |
+| National weather and animation grids | Postgres (`weather_now`, `weather_state`, `weather_grid`) | written by GitHub Actions; the app copies grids into `app/static/` at runtime |
 
 `.gitignore` ignores `data/`, `models/`, `.venv/`, `.env` and
 `.streamlit/secrets.toml`, and re-includes `app/assets/**` — the blanket `*.parquet`

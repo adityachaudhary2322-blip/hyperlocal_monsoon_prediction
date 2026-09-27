@@ -11,7 +11,7 @@ from src.db.models import Advisory, Alert, Unit
 from src.db.session import get_session
 
 user = require_login()
-st.title("Approval Queue")
+st.title("Approval queue")
 st.caption("Urgent items first. Nothing is sent from this page - approving moves an "
            "item to the Outbox.")
 

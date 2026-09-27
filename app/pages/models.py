@@ -19,7 +19,7 @@ from src.llm import cache as llm_cache
 from src.runtime import status as runtime_status
 
 user = require_login()
-st.title("Models")
+st.title("Models & settings")
 
 cfg = effective_llm_config()
 base = load_config("llm")

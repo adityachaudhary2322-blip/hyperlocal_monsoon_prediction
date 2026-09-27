@@ -87,13 +87,52 @@ def export_calibrator(path: Path, out: Path) -> dict:
     return {"breakpoints": len(payload["x"]), "max_error": largest}
 
 
+SKILL_FILE = ROOT / "app" / "assets" / "model_skill.csv"
+SKILL_COLUMNS = ["target", "horizon", "n", "n_pos", "base_rate", "bss", "auc"]
+
+
+def export_skill(calibration: str) -> Path:
+    """Test-year skill of the exact model the site serves, for the public page.
+
+    Read from outputs/metrics/metrics.csv (written by src.evaluate_baselines on the
+    2022+ test years). Only the overall rows of `lightgbm_<calibration>` are kept, with
+    `n` and `n_pos` beside every score (CLAUDE.md §13) - no per-district rows, since
+    Purnia's onset_7 has 11 test rows and would read as a finding.
+    """
+    import pandas as pd
+
+    metrics_file = ROOT / "outputs" / "metrics" / "metrics.csv"
+    if not metrics_file.is_file():
+        raise DataError(f"missing {metrics_file}; run python -m src.evaluate_baselines")
+    metrics = pd.read_csv(metrics_file)
+    model = f"lightgbm_{calibration}"
+    rows = metrics[(metrics["model"] == model) & (metrics["level"] == "overall")]
+    if rows.empty:
+        raise DataError(f"no overall rows for {model} in {metrics_file.name}")
+    out = rows[SKILL_COLUMNS].sort_values(["target", "horizon"]).copy()
+    out.insert(0, "model", model)
+    for column in ("base_rate", "bss", "auc"):
+        out[column] = out[column].astype("float32").round(4)
+    SKILL_FILE.parent.mkdir(parents=True, exist_ok=True)
+    out.to_csv(SKILL_FILE, index=False)
+    print(f"  {SKILL_FILE.relative_to(ROOT).as_posix()}: {len(out)} rows ({model}, "
+          f"test years)")
+    return SKILL_FILE
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--calibration", default=CALIBRATION,
                         help=f"calibrator suffix to export (default {CALIBRATION})")
+    parser.add_argument("--skill-only", action="store_true",
+                        help="only rewrite app/assets/model_skill.csv")
     args = parser.parse_args()
 
     print("--- export_models ---")
+    skill_file = export_skill(args.calibration)
+    if args.skill_only:
+        summarize("export_models --skill-only", rows=12, files=[skill_file])
+        return 0
     if not LGBM_DIR.is_dir():
         raise DataError(f"missing {LGBM_DIR}; run python -m src.train_baselines first")
 

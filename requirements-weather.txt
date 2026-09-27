@@ -1,0 +1,16 @@
+# The 3-hourly weather job (.github/workflows/weather.yml) - nothing else.
+#
+# `python -m src.jobs.weather` imports only these: requests for Open-Meteo, SQLAlchemy +
+# psycopg2 for the cloud database, numpy/PyYAML/python-dotenv via src.common and
+# src.runtime. Installing requirements.txt instead would pull streamlit, lightgbm and
+# geopandas into a job that runs eight times a day.
+#
+# Every pin must equal the one in requirements.txt; tests/test_deployment.py fails if
+# they drift.
+
+requests==2.34.2
+SQLAlchemy==2.1.1
+psycopg2-binary==2.9.10
+numpy==2.4.6
+PyYAML==6.0.3
+python-dotenv==1.2.3

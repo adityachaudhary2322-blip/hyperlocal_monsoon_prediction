@@ -98,7 +98,8 @@ with left:
         "District": subscriber.district,
         "Lang": message.language,
         "Channel": message.channel,
-        "Status": message.delivery_status,
+        "Status": (("✕ " if message.error else "✓ ")
+                   + (message.delivery_status or "")),
         "Preview": (message.body[:60] + "...") if len(message.body) > 60
                    else message.body,
     } for message, subscriber in messages])

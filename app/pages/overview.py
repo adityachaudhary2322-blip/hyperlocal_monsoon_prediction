@@ -54,7 +54,7 @@ try:
         )
 
     columns = st.columns(4)
-    columns[0].metric("Units at red risk", red_units,
+    columns[0].metric("Units at high risk", red_units,
                       help="Any hazard in the >60% band on the latest run")
     columns[1].metric("Pending approvals", pending)
     columns[2].metric("Messages sent", sent, help="Mock messages count here too")
@@ -78,14 +78,14 @@ try:
             rows.append({
                 "State": state,
                 "Units": group["unit_id"].nunique(),
-                "Red": int(group.loc[group["risk_level"] == "red",
+                "◆ High": int(group.loc[group["risk_level"] == "red",
                                      "unit_id"].nunique()),
-                "Amber": int(group.loc[group["risk_level"] == "amber",
+                "▲ Medium": int(group.loc[group["risk_level"] == "amber",
                                        "unit_id"].nunique()),
                 "Advisories": len(adv),
-                "Pending": int((adv["status"] == "pending_approval").sum()),
-                "Approved": int((adv["status"] == "approved").sum()),
-                "Sent": int((adv["status"] == "sent").sum()),
+                "⏳ Pending": int((adv["status"] == "pending_approval").sum()),
+                "✓ Approved": int((adv["status"] == "approved").sum()),
+                "➤ Sent": int((adv["status"] == "sent").sum()),
             })
         st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
 

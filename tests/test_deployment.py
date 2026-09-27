@@ -131,6 +131,11 @@ def test_chronos_layer_uses_the_cpu_wheel_index():
 # ==========================================================================
 @pytest.mark.parametrize("module", [
     "app.common",
+    "app.theme",
+    "app.public_data",
+    "app.components.public_map",
+    "src.jobs.weather",
+    "src.jobs.weather_grid",
     "src.db.init",
     "src.db.session",
     "src.pipeline.run",
@@ -638,3 +643,85 @@ def test_pipeline_main_accepts_argv_for_in_process_calls():
     from src.pipeline import run
 
     assert "argv" in inspect.signature(run.main).parameters
+
+
+# ==========================================================================
+# Public dashboard: static map files, weather jobs, workflows
+# ==========================================================================
+STATIC = ROOT / "app" / "static"
+WEATHER_REQS = ROOT / "requirements-weather.txt"
+
+
+def test_weather_job_pins_match_the_site():
+    """The Actions job must run the same library versions the site was tested with."""
+    site, job = _pins(SITE_REQS), _pins(WEATHER_REQS)
+    assert job, "requirements-weather.txt pins nothing"
+    drift = {k: (v, site.get(k)) for k, v in job.items() if site.get(k) != v}
+    assert not drift, f"requirements-weather.txt drifts from requirements.txt: {drift}"
+
+
+def test_public_map_layers_stay_under_five_megabytes():
+    """The brief: the national layer and each state's file under 5 MB."""
+    national = STATIC / "india_states.geojson"
+    assert national.is_file(), "run python scripts/build_public_map_assets.py"
+    assert national.stat().st_size < 5e6
+    for path in STATIC.glob("*_*.geojson"):
+        assert path.stat().st_size < 5e6, f"{path.name} is {path.stat().st_size / 1e6:.1f} MB"
+
+
+def test_every_covered_state_has_district_and_unit_files():
+    meta = json.loads((STATIC / "boundary_source.json").read_text(encoding="utf-8"))
+    assert len(meta["covered"]) == 5
+    for info in meta["covered"].values():
+        assert (STATIC / f"units_{info['key']}.geojson").is_file()
+        assert (STATIC / f"districts_{info['key']}.geojson").is_file()
+
+
+def test_map_geometry_is_plain_polygons():
+    """GeometryCollections (from make_valid or GDAL rounding) broke the map once."""
+    for name in ("india_states", "india_outline"):
+        data = json.loads((STATIC / f"{name}.geojson").read_text(encoding="utf-8"))
+        kinds = {f["geometry"]["type"] for f in data["features"]}
+        assert kinds <= {"Polygon", "MultiPolygon"}, f"{name}: {kinds}"
+
+
+def test_animation_data_stays_under_five_megabytes():
+    total = sum(p.stat().st_size for p in (STATIC / n for n in
+                ("onset_replay.json", "wind.json", "rain_forecast.json")) if p.is_file())
+    assert total < 5e6, f"animation data is {total / 1e6:.1f} MB"
+
+
+def test_runtime_grid_files_are_not_committed():
+    ignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
+    assert "app/static/wind.json" in ignore and "app/static/rain_forecast.json" in ignore
+
+
+@pytest.mark.parametrize("workflow", ["weather.yml", "weather-grid.yml"])
+def test_workflows_read_the_database_url_by_name_only(workflow):
+    text = (ROOT / ".github" / "workflows" / workflow).read_text(encoding="utf-8")
+    front = yaml.safe_load(text)
+    assert front.get("permissions", {}).get("contents") == "read"
+    assert "--db-url-env DATABASE_URL_CLOUD" in text
+    assert "requirements-weather.txt" in text
+    assert "postgres" not in text.lower(), "a connection string in the workflow"
+
+
+def test_docker_image_carries_the_streamlit_config():
+    """Without config.toml there is no static serving, so no map files."""
+    assert ".streamlit/config.toml" in DOCKERFILE.read_text(encoding="utf-8")
+
+
+def test_partner_logo_appears_only_when_the_file_exists(tmp_path, monkeypatch):
+    """Nothing is drawn or downloaded in place of a ministry logo: the footer shows one
+    only if someone has put app/static/partners/moes-logo.png there by hand."""
+    import app.theme as theme
+
+    rendered: list[str] = []
+    monkeypatch.setattr(theme.st, "html", lambda body, **kw: rendered.append(body))
+    monkeypatch.setattr(theme, "PARTNER_LOGO", tmp_path / "moes-logo.png")
+    theme.footer()
+    assert "moes-logo.png" not in rendered[-1]
+    (tmp_path / "moes-logo.png").write_bytes(b"not-a-real-png")
+    theme.footer()
+    assert "partners/moes-logo.png" in rendered[-1]
+    assert "Smart India Hackathon" in rendered[-1] and "not an official government" in rendered[-1]

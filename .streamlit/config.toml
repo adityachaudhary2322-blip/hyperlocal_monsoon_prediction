@@ -1,0 +1,51 @@
+# Streamlit configuration for app/main.py (local, Streamlit Community Cloud, Docker).
+#
+# Colours mirror app/theme.py TOKENS; tests/test_theme.py fails if they drift. The
+# Dark mode toggle in the top bar re-themes pages through CSS variables (see the
+# app/theme.py docstring for why); these two sections make Streamlit's own native
+# widgets start from the same palette in whichever scheme the browser prefers.
+
+[server]
+# app/static/ holds the map GeoJSON, loaded lazily per state by the MapLibre component.
+enableStaticServing = true
+
+[client]
+# Hide rerun / clear cache / deploy from public viewers.
+toolbarMode = "viewer"
+showSidebarNavigation = false
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+font = "Mukta:https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap"
+baseFontSize = 16
+baseRadius = "6px"
+buttonRadius = "6px"
+showWidgetBorder = true
+headingFontSizes = ["1.75rem", "1.25rem", "1.0625rem"]
+headingFontWeights = [700, 600, 600]
+
+[theme.light]
+primaryColor = "#2E5E7E"
+backgroundColor = "#F6F8F9"
+secondaryBackgroundColor = "#EEF2F4"
+textColor = "#1C2B36"
+linkColor = "#2E5E7E"
+borderColor = "#DCE3E7"
+greenColor = "#2F7A4B"
+orangeColor = "#8A5A00"
+redColor = "#A8362F"
+blueColor = "#2E5E7E"
+
+[theme.dark]
+primaryColor = "#7FB0D4"
+backgroundColor = "#0F1B24"
+secondaryBackgroundColor = "#172733"
+textColor = "#E6EDF1"
+linkColor = "#7FB0D4"
+borderColor = "#2A3E4C"
+greenColor = "#8CC98F"
+orangeColor = "#E9B64E"
+redColor = "#E0726A"
+blueColor = "#7FB0D4"

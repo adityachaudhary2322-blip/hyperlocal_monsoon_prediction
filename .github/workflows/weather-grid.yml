@@ -1,0 +1,42 @@
+name: Weather animation grid
+
+# Every 6 hours: 850 hPa wind + 72 h / 7 d rain on a 1.5 degree grid over India, stored in
+# the cloud database's weather_grid table. The hosted app copies it into app/static/ on
+# its own disk, so this job never commits to the repo (a commit every 6 h would redeploy
+# the site four times a day). Rate budget: 552 calls per run, 2,208/day - see
+# config/weather.yaml.
+#
+# Needs the repository secret DATABASE_URL_CLOUD, read by NAME via --db-url-env.
+
+on:
+  schedule:
+    - cron: "45 */6 * * *"      # 00:45, 06:45, 12:45, 18:45 UTC - clear of the :15 district job
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weather-grid
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-weather.txt
+
+      - name: Install
+        run: python -m pip install -r requirements-weather.txt
+
+      - name: Fetch Open-Meteo grid and replace weather_grid rows
+        env:
+          DATABASE_URL_CLOUD: ${{ secrets.DATABASE_URL_CLOUD }}
+        run: python -m src.jobs.weather_grid --db-url-env DATABASE_URL_CLOUD

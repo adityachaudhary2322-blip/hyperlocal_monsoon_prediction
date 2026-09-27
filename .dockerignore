@@ -2,6 +2,7 @@
 
 # Secrets - never in an image layer, even a private one.
 .env
+.streamlit/secrets.toml
 *.pem
 *.key
 

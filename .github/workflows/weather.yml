@@ -1,0 +1,42 @@
+name: National weather
+
+# Refreshes weather_now / weather_state in the cloud database every 3 hours, so the
+# public map stays current while the laptop is off. Open-Meteo terms and rate budget
+# are documented in config/weather.yaml.
+#
+# Needs one repository secret: DATABASE_URL_CLOUD (Settings -> Secrets and variables ->
+# Actions). The job reads it by NAME via --db-url-env, so the URL never appears in a
+# command line or in the log.
+
+on:
+  schedule:
+    - cron: "15 */3 * * *"      # 00:15, 03:15, ... UTC; off the top of the hour
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weather
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-weather.txt
+
+      - name: Install
+        run: python -m pip install -r requirements-weather.txt
+
+      - name: Fetch Open-Meteo and replace weather tables
+        env:
+          DATABASE_URL_CLOUD: ${{ secrets.DATABASE_URL_CLOUD }}
+        run: python -m src.jobs.weather --db-url-env DATABASE_URL_CLOUD

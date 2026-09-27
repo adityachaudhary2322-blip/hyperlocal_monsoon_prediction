@@ -1,0 +1,39 @@
+{
+  "official": false,
+  "source": "Survey of India layers via the india-geodata mirror (github.com/yashveeeeeeer/india-geodata)",
+  "file": "data/raw/boundary_mirror/SOI_States.parquet, data/raw/boundary_mirror/SOI_Districts.parquet",
+  "built_utc": "2026-09-27T07:10Z",
+  "covered": {
+    "Uttar Pradesh": {
+      "key": "uttar_pradesh",
+      "units": 214,
+      "districts": 75
+    },
+    "NCT of Delhi": {
+      "key": "delhi",
+      "units": 1,
+      "districts": 1
+    },
+    "Bihar": {
+      "key": "bihar",
+      "units": 53,
+      "districts": 38
+    },
+    "Madhya Pradesh": {
+      "key": "madhya_pradesh",
+      "units": 166,
+      "districts": 51
+    },
+    "Maharashtra": {
+      "key": "maharashtra",
+      "units": 305,
+      "districts": 36
+    }
+  },
+  "subdistrict_source": "GADM 4.1 level 3 (not blocks; see CLAUDE.md §5)",
+  "tolerances_m": {
+    "states": 800.0,
+    "districts": 400.0,
+    "units": 250.0
+  }
+}

@@ -11,7 +11,7 @@ from src.llm.validation import ValidationError, validate_text
 from src.runtime import llm_is_mock, llm_mock_reason
 
 user = require_login()
-st.title("Custom Alert")
+st.title("Custom alert")
 st.caption("Anything written here still goes through the approval queue - including "
            "your own. Nothing on this page sends a message.")
 

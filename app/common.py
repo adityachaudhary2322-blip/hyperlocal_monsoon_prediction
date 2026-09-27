@@ -11,8 +11,10 @@ from src.db.models import AuditLog, Setting, Unit, User
 from src.db.session import create_all, get_session
 from src.runtime import status as runtime_status
 
-RISK_COLOURS = {"green": "#1baf7a", "amber": "#eda100", "red": "#d03b3b",
-                "unknown": "#c3c2b7"}
+# Map fills, from the design tokens in app/theme.py (light theme). Text never uses
+# these: see theme.risk_label, which pairs an icon and a word with a darker ink.
+RISK_COLOURS = {"green": "#3E9A61", "amber": "#E1A42A", "red": "#C4453D",
+                "unknown": "#C5CDD2"}
 LANGUAGE_LABELS = {"en": "English", "hi": "हिन्दी", "mr": "मराठी"}
 
 
@@ -63,43 +65,54 @@ def artifact_state() -> tuple[bool, str]:
 # --------------------------------------------------------------------------
 # Auth
 # --------------------------------------------------------------------------
-def authenticate() -> User | None:
-    """Username/password against the bcrypt hashes in `users`.
+def current_user() -> User | None:
+    return st.session_state.get("user") or None
+
+
+def login_form() -> User | None:
+    """Username/password against the bcrypt hashes in `users`. Returns the user on success.
 
     streamlit-authenticator wants a credentials dict up front; building it from the
     database keeps one source of truth and lets db.init rotate passwords.
     """
     import bcrypt
 
-    if "user" in st.session_state and st.session_state["user"]:
-        return st.session_state["user"]
+    with st.form("login", border=True, width=420):
+        username = st.text_input("Username", autocomplete="username")
+        password = st.text_input("Password", type="password",
+                                 autocomplete="current-password")
+        submitted = st.form_submit_button("Sign in", type="primary")
 
-    st.markdown("## Monsoon advisory control panel")
-    st.caption("Sign in with an account created by `python -m src.db.init`.")
+    if not submitted:
+        return None
+    session = get_session()
+    try:
+        user = session.get(User, username.strip())
+        ok = bool(
+            user and user.active
+            and bcrypt.checkpw(password.encode("utf-8"),
+                               user.password_hash.encode("utf-8"))
+        )
+        if not ok:
+            st.error("Wrong username or password.")
+            return None
+        session.expunge(user)
+        st.session_state["user"] = user
+        log(username.strip(), "login", "user", username.strip())
+        return user
+    finally:
+        session.close()
 
-    with st.form("login"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Sign in")
 
-    if submitted:
-        session = get_session()
-        try:
-            user = session.get(User, username.strip())
-            ok = bool(
-                user and user.active
-                and bcrypt.checkpw(password.encode("utf-8"),
-                                   user.password_hash.encode("utf-8"))
-            )
-            if ok:
-                session.expunge(user)
-                st.session_state["user"] = user
-                log(username.strip(), "login", "user", username.strip())
-                st.rerun()
-            else:
-                st.error("Wrong username or password.")
-        finally:
-            session.close()
+def authenticate() -> User | None:
+    """The signed-in user, or a login form (and None) when there is none."""
+    user = current_user()
+    if user:
+        return user
+    st.title("Officer sign in")
+    st.caption("Accounts are created by an administrator.")
+    if login_form():
+        st.rerun()
     return None
 
 
@@ -108,17 +121,6 @@ def require_login() -> User:
     if user is None:
         st.stop()
     return user
-
-
-def sign_out_button(user: User) -> None:
-    with st.sidebar:
-        st.markdown(f"**{user.name}**")
-        scope = "all states" if user.role == "admin" else ", ".join(user.states())
-        st.caption(f"{user.role} · {scope}")
-        if st.button("Sign out", width="stretch"):
-            log(user.username, "logout", "user", user.username)
-            st.session_state.pop("user", None)
-            st.rerun()
 
 
 def visible_states(user: User) -> list[str] | None:
@@ -157,10 +159,10 @@ def mode_banner() -> dict:
 
 
 def risk_chip(level: str) -> str:
-    colour = RISK_COLOURS.get(level, RISK_COLOURS["unknown"])
-    return (f"<span style='background:{colour};color:#fff;padding:2px 10px;"
-            f"border-radius:10px;font-size:0.78rem;font-weight:600'>"
-            f"{(level or 'unknown').upper()}</span>")
+    """Icon + word in a text colour that passes AA - never a colour-only pill."""
+    from app.theme import risk_label
+
+    return risk_label(level)
 
 
 # --------------------------------------------------------------------------

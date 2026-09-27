@@ -1,0 +1,188 @@
+/* Public map. Colours come from the --mo-* tokens injected by app/theme.py, so the map
+   chrome switches with the Dark mode toggle like every other element. */
+
+.mo-root { display: flex; flex-direction: column; gap: 10px; position: relative;
+  font-family: "Mukta", system-ui, sans-serif; color: var(--mo-ink); }
+.mo-map { position: relative; width: 100%; height: calc(100vh - 170px); min-height: 520px; max-height: 900px;
+  border: 1px solid var(--mo-line); border-radius: 8px; overflow: hidden; background: var(--mo-bg); }
+.mo-map .mo-canvas { position: absolute; inset: 0; }
+.mo-map .maplibregl-canvas:focus-visible { outline: 3px solid var(--mo-focus); outline-offset: -3px; }
+.mo-sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; }
+.mo-root [hidden] { display: none !important; }
+
+/* Floating surfaces: flat, 1 px line, one soft shadow for legibility over map tiles. */
+.mo-surface { background: var(--mo-surface); color: var(--mo-ink);
+  border: 1px solid var(--mo-line); border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(15, 27, 36, .12); }
+.mo-root button, .mo-root select, .mo-root input { font-family: inherit; }
+.mo-root :focus-visible { outline: 3px solid var(--mo-focus); outline-offset: 2px; }
+
+/* ---- wind particles ---- */
+.mo-wind { position: absolute; inset: 0; pointer-events: none; z-index: 1; opacity: 0;
+  transition: opacity 1.2s ease; }
+.mo-wind.on { opacity: 1; }
+
+/* ---- control panel: floats over the map on desktop, sits below it on phones ---- */
+.mo-controls { position: absolute; top: 12px; left: 12px; z-index: 4; width: 312px;
+  max-height: calc(100vh - 210px); overflow: auto; padding: 10px 12px 12px; }
+.mo-controls-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mo-controls h2 { margin: 0; font-size: 16px; line-height: 22px; font-weight: 700; color: var(--mo-ink); }
+.mo-collapse { font: 500 14px/20px "Mukta", system-ui, sans-serif; color: var(--mo-primary);
+  background: none; border: 1px solid transparent; border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+.mo-collapse:hover { border-color: var(--mo-line-strong); }
+.mo-controls.collapsed { width: auto; }
+.mo-controls.collapsed .mo-controls-body { display: none; }
+.mo-grp { border-top: 1px solid var(--mo-line); margin-top: 10px; padding-top: 8px; }
+.mo-grp h3 { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: var(--mo-muted); }
+.mo-seg { border: 0; margin: 0 0 6px; padding: 0; min-width: 0; }
+.mo-seg legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.mo-seg-row { display: flex; border: 1px solid var(--mo-line-strong); border-radius: 6px; overflow: hidden; }
+.mo-seg label { flex: 1; position: relative; }
+.mo-seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.mo-seg span { display: flex; align-items: center; justify-content: center; min-height: 34px; padding: 2px 6px;
+  font-size: 14px; font-weight: 500; line-height: 1.15; text-align: center; color: var(--mo-ink);
+  background: var(--mo-surface); border-left: 1px solid var(--mo-line-strong); cursor: pointer; }
+.mo-seg label:first-child span { border-left: 0; }
+.mo-seg input:checked + span { background: var(--mo-primary); color: var(--mo-on-primary); font-weight: 600; }
+.mo-seg input:hover:not(:checked) + span { background: var(--mo-primary-soft); }
+.mo-seg input:focus-visible + span { outline: 3px solid var(--mo-focus); outline-offset: -3px; }
+.mo-window { margin: 2px 0 0; font-size: 13px; color: var(--mo-muted); font-variant-numeric: tabular-nums; }
+
+.mo-switch { display: flex; align-items: center; gap: 10px; min-height: 36px; cursor: pointer; font-size: 15px; }
+.mo-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.mo-switch-ui { width: 36px; height: 20px; border-radius: 999px; background: var(--mo-line-strong);
+  position: relative; flex: none; transition: background .2s; }
+.mo-switch-ui::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+  border-radius: 50%; background: var(--mo-surface); transition: transform .2s; }
+.mo-switch input:checked + .mo-switch-ui { background: var(--mo-primary); }
+.mo-switch input:checked + .mo-switch-ui::after { transform: translateX(16px); }
+.mo-switch input:focus-visible + .mo-switch-ui { outline: 3px solid var(--mo-focus); outline-offset: 2px; }
+.mo-root small { color: var(--mo-muted); font-size: 12.5px; font-weight: 400; margin-left: 4px; }
+.mo-anim-btn { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 36px; margin-top: 4px;
+  padding: 4px 10px; font-size: 15px; font-weight: 500; color: var(--mo-ink); text-align: left;
+  background: var(--mo-surface); border: 1px solid var(--mo-line-strong); border-radius: 6px; cursor: pointer; }
+.mo-anim-btn:hover { border-color: var(--mo-primary); color: var(--mo-primary); }
+.mo-anim-btn span[aria-hidden] { font-size: 11px; color: var(--mo-primary); }
+.mo-anim-row { display: flex; gap: 6px; align-items: stretch; }
+.mo-anim-row .mo-anim-btn { flex: 1; }
+.mo-season { margin-top: 4px; min-height: 36px; padding: 0 8px; font-size: 15px; color: var(--mo-ink);
+  background: var(--mo-surface); border: 1px solid var(--mo-line-strong); border-radius: 6px; }
+.mo-playing .mo-anim-btn { opacity: .8; }
+
+/* ---- search ---- */
+.mo-search { position: absolute; top: 12px; right: 12px; width: 300px; z-index: 3; }
+.mo-search input { width: 100%; box-sizing: border-box; height: 40px; padding: 0 12px 0 36px;
+  font: 500 15px/20px "Mukta", system-ui, sans-serif; color: var(--mo-ink);
+  background: var(--mo-surface); border: 1px solid var(--mo-line-strong); border-radius: 8px; }
+.mo-search input::placeholder { color: var(--mo-muted); opacity: 1; }
+.mo-search .mo-search-ico { position: absolute; left: 11px; top: 11px; width: 18px; height: 18px;
+  pointer-events: none; color: var(--mo-muted); }
+.mo-results { list-style: none; margin: 4px 0 0; padding: 4px 0; max-height: 300px; overflow: auto; }
+.mo-results li { padding: 6px 12px; cursor: pointer; line-height: 1.3; }
+.mo-results li small { display: block; margin: 0; }
+.mo-results li[aria-selected="true"], .mo-results li:hover { background: var(--mo-primary-soft); }
+.mo-results .mo-empty { color: var(--mo-muted); cursor: default; }
+
+/* ---- legend ---- */
+.mo-legend { position: absolute; right: 12px; bottom: 30px; z-index: 2; padding: 10px 12px;
+  width: 232px; font-size: 14px; line-height: 1.35; }
+.mo-legend h4 { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: var(--mo-ink); }
+.mo-legend .mo-legend-block + .mo-legend-block { margin-top: 10px; padding-top: 8px;
+  border-top: 1px solid var(--mo-line); }
+.mo-legend .row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+.mo-legend .sw { width: 18px; height: 14px; border-radius: 3px; flex: none;
+  border: 1px solid var(--mo-line-strong); }
+.mo-legend .ico { width: 14px; text-align: center; flex: none; font-size: 12px; }
+.mo-legend .ramp { display: flex; }
+.mo-legend .ramp span { flex: 1; height: 12px; border: 1px solid var(--mo-line-strong); border-right: 0; }
+.mo-legend .ramp span:last-child { border-right: 1px solid var(--mo-line-strong); }
+.mo-legend .ramp-labels { position: relative; height: 16px; font-size: 12.5px;
+  color: var(--mo-muted); font-variant-numeric: tabular-nums; margin-top: 2px; }
+.mo-legend .ramp-labels span { position: absolute; top: 0; transform: translateX(-50%); }
+.mo-legend .hint { color: var(--mo-muted); font-size: 13px; margin: 6px 0 0; }
+.mo-legend-toggle { display: none; }
+
+/* ---- details panel ---- */
+.mo-panel { position: absolute; right: 12px; top: 64px; width: 340px;
+  max-height: calc(100% - 64px - 30px - 12px - var(--mo-legend-h, 180px));
+  overflow: auto; z-index: 5; padding: 14px 16px 12px; }
+.mo-panel h3 { margin: 0 32px 2px 0; font-size: 20px; line-height: 26px; font-weight: 700; }
+.mo-panel .sub { margin: 0; color: var(--mo-muted); font-size: 14px; }
+.mo-panel .week { margin: 10px 0 4px; font-weight: 600; font-size: 14px; }
+.mo-panel .close { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px;
+  border: 1px solid transparent; border-radius: 6px; background: transparent;
+  color: var(--mo-muted); font-size: 20px; line-height: 1; cursor: pointer; }
+.mo-panel .close:hover { border-color: var(--mo-line-strong); color: var(--mo-ink); }
+.mo-panel table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+.mo-panel td { padding: 5px 0; border-bottom: 1px solid var(--mo-line); }
+.mo-panel td.pct { text-align: right; padding-right: 10px; font-weight: 600; }
+.mo-panel td.lvl { width: 92px; font-weight: 600; white-space: nowrap; }
+.mo-panel .tabs { display: flex; gap: 4px; margin: 12px 0 0; border-bottom: 1px solid var(--mo-line); }
+.mo-panel .tabs button { font: 500 15px/20px "Mukta", system-ui, sans-serif; color: var(--mo-muted);
+  background: none; border: 0; border-bottom: 2px solid transparent; padding: 6px 8px; cursor: pointer; }
+.mo-panel .tabs button[aria-selected="true"] { color: var(--mo-ink); border-bottom-color: var(--mo-primary); }
+.mo-panel .advice { margin: 8px 0 0; font-size: 15px; line-height: 1.55; }
+.mo-panel .advice:lang(hi), .mo-panel .advice:lang(mr) { line-height: 1.7; }
+.mo-panel .foot { margin: 10px 0 0; color: var(--mo-muted); font-size: 13px; }
+.mo-panel .note { margin: 8px 0 0; font-size: 14px; color: var(--mo-muted); }
+
+/* ---- tooltip + notes ---- */
+.mo-tip { position: absolute; z-index: 6; pointer-events: none; padding: 5px 9px; font-size: 14px;
+  line-height: 1.3; max-width: 260px; }
+.mo-tip b { font-weight: 600; }
+.mo-note { position: absolute; left: 12px; bottom: 30px; z-index: 2; padding: 3px 10px;
+  font-size: 13px; color: var(--mo-ink); max-width: 45%; }
+.mo-hint { position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); z-index: 2;
+  padding: 6px 12px; font-size: 14px; white-space: nowrap; }
+.mo-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  padding: 24px; text-align: center; color: var(--mo-muted); }
+
+/* ---- timeline (under the map) ---- */
+.mo-timeline { display: flex; align-items: center; gap: 12px; padding: 8px 12px; }
+.mo-play, .mo-tl-close { flex: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+  font-size: 15px; line-height: 1; border: 1px solid var(--mo-line-strong); background: var(--mo-surface);
+  color: var(--mo-ink); }
+.mo-play { background: var(--mo-primary); color: var(--mo-on-primary); border-color: var(--mo-primary); }
+.mo-tl-close { font-size: 20px; color: var(--mo-muted); }
+.mo-tl-main { flex: 1; min-width: 0; }
+.mo-tl-top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  font-variant-numeric: tabular-nums; }
+.mo-tl-label { font-weight: 700; font-size: 16px; }
+.mo-tl-count { color: var(--mo-muted); font-size: 14px; }
+.mo-scrub { width: 100%; margin: 4px 0 0; accent-color: var(--mo-primary); height: 24px; }
+.mo-tl-caption { margin: 0; font-size: 13px; color: var(--mo-muted); }
+.mo-speed { display: flex; border: 1px solid var(--mo-line-strong); border-radius: 6px; overflow: hidden; flex: none; }
+.mo-speed label { position: relative; }
+.mo-speed input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.mo-speed span { display: block; padding: 6px 10px; font-size: 14px; font-weight: 600;
+  font-variant-numeric: tabular-nums; }
+.mo-speed input:checked + span { background: var(--mo-primary); color: var(--mo-on-primary); }
+.mo-speed input:focus-visible + span { outline: 3px solid var(--mo-focus); outline-offset: -3px; }
+
+.mo-map .maplibregl-ctrl-attrib { background: color-mix(in srgb, var(--mo-surface) 85%, transparent);
+  color: var(--mo-muted); font-size: 11px; }
+.mo-map .maplibregl-ctrl-attrib a { color: var(--mo-ink); }
+.mo-map .maplibregl-ctrl-group { background: var(--mo-surface); border: 1px solid var(--mo-line); box-shadow: none; }
+.mo-map .maplibregl-ctrl-group button + button { border-top-color: var(--mo-line); }
+.mo-map .maplibregl-ctrl button .maplibregl-ctrl-icon { filter: var(--mo-ctrl-filter, none); }
+
+/* ---- phones: map first, then playback, then options (DOM order) ---- */
+@media (max-width: 720px) {
+  .mo-map { height: 62vh; min-height: 360px; border-radius: 6px; }
+  .mo-controls { position: static; width: auto; max-height: none; }
+  .mo-collapse { display: none; }
+  .mo-seg span { min-height: 44px; }
+  .mo-search { left: 8px; right: 8px; top: 8px; width: auto; }
+  .mo-legend { left: 8px; right: auto; bottom: 26px; width: auto; max-width: calc(100% - 64px);
+    padding: 4px 10px; }
+  .mo-legend.collapsed .mo-legend-body { display: none; }
+  .mo-legend-toggle { display: block; font: 600 14px/20px "Mukta", system-ui, sans-serif;
+    color: var(--mo-ink); background: none; border: 0; padding: 4px 0; cursor: pointer; min-height: 32px; }
+  .mo-panel { left: 0; right: 0; bottom: 0; top: auto; width: auto; max-height: 70%;
+    border-radius: 12px 12px 0 0; }
+  .mo-note { left: 8px; right: auto; bottom: auto; top: 56px; max-width: none; font-size: 12.5px; }
+  .mo-hint { display: none; }     /* the options below the map say the same thing */
+  .mo-timeline { flex-wrap: wrap; gap: 8px 10px; }
+  .mo-tl-main { order: 3; flex-basis: 100%; }
+}

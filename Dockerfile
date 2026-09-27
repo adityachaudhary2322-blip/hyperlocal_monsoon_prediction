@@ -52,6 +52,9 @@ COPY --chown=appuser:appuser src/ ./src/
 COPY --chown=appuser:appuser app/ ./app/
 COPY --chown=appuser:appuser config/ ./config/
 COPY --chown=appuser:appuser scripts/ ./scripts/
+# Theme, static file serving (app/static/ holds the public map's GeoJSON) and the
+# viewer toolbar. Only config.toml: secrets arrive as environment variables.
+COPY --chown=appuser:appuser .streamlit/config.toml ./.streamlit/config.toml
 
 # The app writes nothing here, but src/common.py resolves these paths and a download
 # of the feature table lands in data/processed/.

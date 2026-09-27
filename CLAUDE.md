@@ -431,3 +431,69 @@ because only `$HOME` and `/tmp` are writable there. That target uses
 `scripts/upload_models.py` + `src/artifacts.py` (a private HF model repo) instead of
 committed assets. Docker was not available on this machine, so the image is unbuilt and
 untested; the dependency set was verified in a clean venv instead.
+
+## 18. Public dashboard (Home + About), officer portal, branding
+
+`app/main.py` registers **Home and About for everyone**, **Sign in** when signed out,
+and the six officer pages only after sign-in (`st.navigation(position="hidden")`, our
+own top bar in `app/theme.py`). Each officer page still starts with `require_login()`.
+
+**Public data rule.** Public pages read the database only through `app/public_data.py`:
+`units, forecast_runs, forecasts, advisories (status approved/sent only), weather_now,
+weather_state, weather_fetch, weather_grid`. `tests/test_public_access.py` checks it three
+ways - imports (AST), every SQL statement a Home/About run issues, and planted marker
+strings in pending/rejected advisories, subscribers, users and audit rows. A mutation
+check (letting pending advisories through) fails the test, verified 2026-09-27. An
+officer-edited advisory is shown as its `edited_text` only - that is what was approved.
+
+**Boundaries.** `scripts/build_public_map_assets.py` prefers
+`data/raw/official_boundary/` (Survey of India OVSF/1M/7, sign-in download, not yet
+present) and otherwise uses the SoI layers from the india-geodata mirror in
+`data/raw/boundary_mirror/` - 40 state polygons (incl. 4 `DISPUTED (...)` inter-state
+tracts), 742 districts, outline to 37.09 N. The map then says "Boundaries indicative, not
+official" (`app/static/boundary_source.json`). Every basemap `boundary` layer and
+country/state label is stripped before MapLibre sees the style; place labels wait for
+zoom 5.5. Forecast polygons stay GADM L3 (unit ids, §5, §10).
+
+Two traps, both fixed in the build:
+- `make_valid` can return GeometryCollections, and GDAL's `COORDINATE_PRECISION` together
+  with `RFC7946=YES` *creates* them while rounding. Round with `shapely.set_precision`
+  and keep only polygonal parts; `tests/test_deployment.py` asserts plain polygons.
+- `st.html` strips inline `<svg>` - brand marks are `<img>` of the committed SVGs. And
+  the public CSS hides every `<footer>` (Streamlit's), so ours is a `div`.
+
+**Map component** (`app/components/public_map.{py,js,css}`): `st.components.v2`, not
+v1 - v1 recreates its iframe when the HTML changes, v2 keeps the DOM across reruns
+(verified: same parent element, no cleanup between reruns), so the globe, wind and any
+playback survive week/hazard changes. The control panel lives inside the component and
+reports `hazard/week/weather` back with `setStateValue`. MapLibre GL 5.24.0 from
+jsDelivr with SRI hashes; `transformStyle` is a `setStyle` option only, so the style is
+fetched and filtered first.
+
+**Animations.** Wind flow (850 hPa, particles advected in lon/lat, drawn with
+`map.project`; screen-space speed ~0.12 px/frame per m/s; <=3000 desktop / 800 phone;
+paused while moving or hidden; only from India zoom). Rain playback (72 hourly + days
+4-7 as daily means, values bilinearly upsampled on Mercator-spaced rows, crossfaded
+image sources). Monsoon advance (`scripts/build_onset_replay.py`, the same
+`detect_onset` rule on unit rainfall; 2022-2025 onsets found in 724/636/736/716 of 739
+units, median 15-23 Jun). One animation at a time; reduced motion turns wind off.
+
+**Weather jobs.** `src/jobs/weather.py` (734 SoI districts, 3-hourly) and
+`src/jobs/weather_grid.py` (23 x 24 = 552 points at 1.5 deg, 6-hourly) - ~8,080
+Open-Meteo calls/day of 10,000. All-or-nothing writes; a failure keeps the last good
+rows and exits non-zero. Grids live in `weather_grid`, never in git (a commit every 6 h
+would redeploy the site); `public_data.animation_files()` copies them to `app/static/`.
+
+**Design tokens** are in `app/theme.py` and mirrored in `.streamlit/config.toml`
+(`tests/test_theme.py`). Streamlit 1.64 cannot switch its native theme from Python, so
+the Dark mode toggle drives `--mo-*` CSS variables; canvas-drawn widgets (st.dataframe)
+follow the browser's scheme instead, which only differs if a viewer flips the toggle
+against their OS setting. Brief colours that fail AA as text (paddy green 3.9:1, amber
+2.1:1) are used for fills only, with darker `*-ink` variants for text; control borders
+are `#7D909C` / `#627D8E` (>= 3:1). GADM units are called "sub-districts" in public copy,
+never "blocks" (§5).
+
+**Branding.** VRRTANTA mark option A ("cloud canopy") in `app/static/brand/`. The footer
+credits the Smart India Hackathon / Ministry of Earth Sciences problem statement as text.
+`app/static/partners/moes-logo.png` is shown only if placed by hand - never draw or
+download a government emblem.
