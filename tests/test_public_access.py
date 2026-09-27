@@ -253,3 +253,24 @@ def test_an_old_advisory_is_never_shown_as_current(seeded_db, monkeypatch):
 
     assert pdata.approved_advisories_by_unit(_dt.date(2024, 6, 25))          # current
     assert pdata.approved_advisories_by_unit(_dt.date(2026, 9, 27)) == {}    # stale
+
+
+def test_live_pages_survive_missing_live_tables(monkeypatch):
+    """Right after a deploy, before src.live.run has created its tables, the public
+    pages must see "no run yet" rather than a database error."""
+    from sqlalchemy.exc import ProgrammingError
+
+    from app import public_data
+
+    def missing(statement):
+        raise ProgrammingError("SELECT ...", {}, Exception('relation "live_runs" does not exist'))
+
+    monkeypatch.setattr(public_data, "_frame", missing)
+    public_data.live_run.clear()
+    public_data.live_verification_frame.clear()
+    try:
+        assert public_data.live_run() is None
+        assert public_data.live_verification_frame().empty
+    finally:
+        public_data.live_run.clear()
+        public_data.live_verification_frame.clear()

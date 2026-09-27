@@ -24,6 +24,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 from sqlalchemy import func, select
+from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from src.db.models import (Advisory, Forecast, ForecastRun, LiveForecast, LiveOutlook,
                            LiveRun, LiveUnit, LiveVerification, LiveWeather, Unit,
@@ -175,9 +176,20 @@ def animation_files() -> dict:
 # --------------------------------------------------------------------------
 # Live national engine (src/live/). Cached 30 minutes: the run is daily.
 # --------------------------------------------------------------------------
+def _live_frame(statement) -> pd.DataFrame:
+    """Like _frame, but the live tables not existing yet reads as "no rows".
+
+    src.live.run creates them on its first run; until then a freshly deployed site
+    must show "first forecast coming", not a database error."""
+    try:
+        return _frame(statement)
+    except (OperationalError, ProgrammingError):
+        return pd.DataFrame()
+
+
 @st.cache_data(ttl=LIVE_TTL, show_spinner=False)
 def live_run() -> dict | None:
-    rows = _frame(select(LiveRun.id, LiveRun.run_date, LiveRun.created_utc, LiveRun.data_delayed,
+    rows = _live_frame(select(LiveRun.id, LiveRun.run_date, LiveRun.created_utc, LiveRun.data_delayed,
                          LiveRun.season, LiveRun.hazards, LiveRun.sources)
                   .where(LiveRun.run_type == "live", LiveRun.keep_detail.is_(True))
                   .order_by(LiveRun.run_date.desc(), LiveRun.id.desc()).limit(1))
@@ -229,7 +241,7 @@ def live_unit_rows(run_id: int, unit_id: str) -> dict:
 
 @st.cache_data(ttl=LIVE_TTL, show_spinner=False)
 def live_verification_frame() -> pd.DataFrame:
-    return _frame(select(LiveVerification.hazard, LiveVerification.horizon,
+    return _live_frame(select(LiveVerification.hazard, LiveVerification.horizon,
                          LiveVerification.tier, LiveVerification.state,
                          LiveVerification.run_date, LiveVerification.p_blend,
                          LiveVerification.p_ml, LiveVerification.p_ec46,
