@@ -1,0 +1,32 @@
+# How src.build_crop_calendar splits the gap between the end of sowing and the start of
+# harvest (both SOURCED from DES) into growth stages. These fractions are DERIVED
+# approximations of typical crop phenology, not a published table: every stage window
+# they produce is written with `basis: derived` in config/crop_calendar.yaml, and the
+# crop impact layer reports that basis. Replace a crop's fractions with a sourced
+# phenology table when one is transcribed; no code changes.
+#
+# vegetative + flowering + maturity must sum to 1.0 (tests/test_crop_calendar.py).
+# "flowering" covers flowering and early pod/grain set; "maturity" covers grain or pod
+# filling up to the harvest window.
+fractions:
+  paddy:     {vegetative: 0.55, flowering: 0.15, maturity: 0.30}
+  bajra:     {vegetative: 0.45, flowering: 0.20, maturity: 0.35}
+  jowar:     {vegetative: 0.45, flowering: 0.20, maturity: 0.35}
+  maize:     {vegetative: 0.45, flowering: 0.20, maturity: 0.35}
+  wheat:     {vegetative: 0.50, flowering: 0.20, maturity: 0.30}
+  tur:       {vegetative: 0.55, flowering: 0.20, maturity: 0.25}
+  moong:     {vegetative: 0.40, flowering: 0.25, maturity: 0.35}
+  urad:      {vegetative: 0.40, flowering: 0.25, maturity: 0.35}
+  soybean:   {vegetative: 0.45, flowering: 0.25, maturity: 0.30}
+  gram:      {vegetative: 0.45, flowering: 0.25, maturity: 0.30}
+  groundnut: {vegetative: 0.40, flowering: 0.30, maturity: 0.30}
+  mustard:   {vegetative: 0.45, flowering: 0.25, maturity: 0.30}
+  cotton:    {vegetative: 0.40, flowering: 0.25, maturity: 0.35}
+  sugarcane: {vegetative: 0.60, flowering: 0.10, maturity: 0.30}
+
+# Crops in the brief that the DES calendar does not cover. Used only when no sourced
+# window exists, written as `basis: default`, and shown as unverified.
+unsourced_defaults:
+  jowar:
+    kharif: {sowing: ["06-15", "07-31"], harvest: ["10-01", "11-15"]}
+    rabi:   {sowing: ["09-15", "10-31"], harvest: ["01-15", "03-15"]}

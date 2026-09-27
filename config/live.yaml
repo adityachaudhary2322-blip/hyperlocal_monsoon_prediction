@@ -1,0 +1,59 @@
+# Live national engine (src/live/run.py, .github/workflows/live.yml, daily 04:30 UTC).
+#
+# Open-Meteo call weight (their rule, confirmed by the ensemble docs' own example):
+#   weight per location = max(1, variables x members / 10) x max(1, days / 14)
+# Measured grids (scripts/build_live_assets.py): 188 points at 1.5 deg, 1,314 at 0.5 deg.
+#   EC46 rain, 51 members, 46 d : 188 x 5.1 x 3.29  = ~3,150
+#   EC46 ensemble mean, 3 vars  : 188 x 1   x 3.29  = ~620
+#   0.5 deg 7 d + 14 past days  : 1,314 x 1 x 1.5  = ~1,970
+#   = ~5,740 per live run, + 2,208/day for the animation grid = ~7,950/day of 10,000.
+# The run computes its own weight from these formulas and prints it.
+
+horizons: [7, 14, 21, 28]
+weeks: 4
+
+ec46:
+  endpoint: https://seasonal-api.open-meteo.com/v1/seasonal
+  model_members: ecmwf_ec46
+  model_mean: ecmwf_ec46_ensemble_mean
+  members: 51                       # control + 50 perturbed, as returned
+  days: 46
+  mean_variables: [temperature_2m_mean, relative_humidity_2m_mean, soil_moisture_0_to_7cm_mean]
+  batch_size: 20                    # 20 points x 16.8 = ~340 calls per request
+  pause_seconds: 5                  # pacing is done by `rate` below
+
+short_range:
+  endpoint: https://api.open-meteo.com/v1/forecast
+  daily: [precipitation_sum, temperature_2m_max, temperature_2m_min,
+          relative_humidity_2m_mean, wind_speed_10m_max, soil_moisture_0_to_7cm_mean]
+  current: [temperature_2m, relative_humidity_2m, precipitation]
+  past_days: 14
+  forecast_days: 7
+  batch_size: 100
+  pause_seconds: 2
+
+observed:
+  imd_realtime_days: 14             # re-read the last 14 IMD real-time days each run
+  backfill_from: "05-15"            # first run of a season backfills from here
+  bias_overlap_days: 13             # days with both IMD and Open-Meteo, for the ratio
+  bias_clip: [0.3, 3.0]
+
+freshness:
+  delayed_after_days: 3             # any input older than this -> run marked "data delayed"
+
+storage:
+  warn_mb: 400                      # 80% of Neon's free 0.5 GB
+  keep_daily_days: 7                # full detail for the last 7 daily runs ...
+  keep_weekday: 0                   # ... and every Monday run (verification), Mon = 0
+
+# Open-Meteo free-tier limits are 600/minute, 5,000/hour, 10,000/day. One run weighs
+# ~5,700, so the client paces itself inside a rolling minute and hour (src/live/openmeteo.py)
+# - a run takes ~75 minutes rather than breaking the hourly limit.
+rate:
+  per_minute: 550
+  per_hour: 4500
+
+retry:
+  attempts: 4
+  backoff_seconds: 10
+  timeout_seconds: 120

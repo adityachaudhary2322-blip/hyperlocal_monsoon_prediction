@@ -1,0 +1,2655 @@
+{
+ "years": "2022-2026",
+ "model": "LightGBM, cross-fitted isotonic calibration",
+ "scope": "pilot sub-districts of the 5 validated states",
+ "rows": [
+  {
+   "hazard": "dry",
+   "week": 1,
+   "state": "All validated states",
+   "tier": "validated",
+   "n": 4140,
+   "events": 884,
+   "base_rate": 0.2135265700483092,
+   "brier": 0.13620901032148716,
+   "brier_ref": 0.14070162195281016,
+   "bss": 0.0319300628448318,
+   "auc": 0.7900560538428185,
+   "hit_rate": 0.5203619909502263,
+   "false_alarm_ratio": 0.49616648411829134,
+   "warnings": 913,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 3227,
+     "observed": 0.13139138518748064,
+     "forecast": 0.1677513400506578
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 481,
+     "observed": 0.37422037422037424,
+     "forecast": 0.4299898254152643
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 432,
+     "observed": 0.6481481481481481,
+     "forecast": 0.7210418979326884
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (3,227 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (481 forecasts).",
+    "When we said high chance (over 60%), it happened 6 in 10 times (432 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 1,
+   "state": "Bihar",
+   "tier": "validated",
+   "n": 276,
+   "events": 21,
+   "base_rate": 0.07608695652173914,
+   "brier": 0.06457072625602825,
+   "brier_ref": 0.06218927674256212,
+   "bss": -0.03829357146770418,
+   "auc": 0.7727357609710551,
+   "hit_rate": 0.23809523809523808,
+   "false_alarm_ratio": 0.6875,
+   "warnings": 16,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 260,
+     "observed": 0.06153846153846154,
+     "forecast": 0.10721479191516455
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 14,
+     "observed": 0.2857142857142857,
+     "forecast": 0.4203116169997624
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 2,
+     "observed": 0.5,
+     "forecast": 0.6240488588809967
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (260 forecasts).",
+    "When we said medium chance (30-60%), it happened 3 in 10 times (14 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 1,
+   "state": "Madhya Pradesh",
+   "tier": "validated",
+   "n": 1242,
+   "events": 219,
+   "base_rate": 0.17632850241545894,
+   "brier": 0.11920569704217569,
+   "brier_ref": 0.1253233326723922,
+   "bss": 0.04881481763821771,
+   "auc": 0.8194383070653508,
+   "hit_rate": 0.5616438356164384,
+   "false_alarm_ratio": 0.5622775800711743,
+   "warnings": 281,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 961,
+     "observed": 0.09989594172736732,
+     "forecast": 0.1581117520641834
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 123,
+     "observed": 0.18699186991869918,
+     "forecast": 0.44382023520585967
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 158,
+     "observed": 0.6329113924050633,
+     "forecast": 0.7394549854194061
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (961 forecasts).",
+    "When we said medium chance (30-60%), it happened 2 in 10 times (123 forecasts).",
+    "When we said high chance (over 60%), it happened 6 in 10 times (158 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 1,
+   "state": "Maharashtra",
+   "tier": "validated",
+   "n": 1794,
+   "events": 430,
+   "base_rate": 0.23968784838350055,
+   "brier": 0.15347515058893926,
+   "brier_ref": 0.16469432299867856,
+   "bss": 0.06812118478321394,
+   "auc": 0.7487016640523767,
+   "hit_rate": 0.4627906976744186,
+   "false_alarm_ratio": 0.4763157894736842,
+   "warnings": 380,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 1414,
+     "observed": 0.16336633663366337,
+     "forecast": 0.19536014807791235
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 231,
+     "observed": 0.4069264069264069,
+     "forecast": 0.41823719177411234
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 149,
+     "observed": 0.7046979865771812,
+     "forecast": 0.7040159154258319
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 2 in 10 times (1,414 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (231 forecasts).",
+    "When we said high chance (over 60%), it happened 7 in 10 times (149 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 1,
+   "state": "Uttar Pradesh",
+   "tier": "validated",
+   "n": 828,
+   "events": 214,
+   "base_rate": 0.2584541062801932,
+   "brier": 0.14818343768279443,
+   "brier_ref": 0.13795565201080495,
+   "bss": -0.07413821415006927,
+   "auc": 0.7979885232427166,
+   "hit_rate": 0.6214953271028038,
+   "false_alarm_ratio": 0.4364406779661017,
+   "warnings": 236,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 592,
+     "observed": 0.13682432432432431,
+     "forecast": 0.14404237386770546
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 113,
+     "observed": 0.5221238938053098,
+     "forecast": 0.44015985094340504
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 123,
+     "observed": 0.6016260162601627,
+     "forecast": 0.7195914072719046
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (592 forecasts).",
+    "When we said medium chance (30-60%), it happened 5 in 10 times (113 forecasts).",
+    "When we said high chance (over 60%), it happened 6 in 10 times (123 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 2,
+   "state": "All validated states",
+   "tier": "validated",
+   "n": 4110,
+   "events": 1286,
+   "base_rate": 0.31289537712895377,
+   "brier": 0.1751534693326336,
+   "brier_ref": 0.1785047242141391,
+   "bss": 0.018774040274056047,
+   "auc": 0.7724452207032368,
+   "hit_rate": 0.7643856920684292,
+   "false_alarm_ratio": 0.4969293756397134,
+   "warnings": 1954,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 2156,
+     "observed": 0.14053803339517626,
+     "forecast": 0.2098514495213587
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 1215,
+     "observed": 0.411522633744856,
+     "forecast": 0.4094113321216018
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 739,
+     "observed": 0.6535859269282814,
+     "forecast": 0.7053497318324604
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (2,156 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (1,215 forecasts).",
+    "When we said high chance (over 60%), it happened 7 in 10 times (739 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 2,
+   "state": "Bihar",
+   "tier": "validated",
+   "n": 274,
+   "events": 36,
+   "base_rate": 0.13138686131386862,
+   "brier": 0.09736087391522166,
+   "brier_ref": 0.0924917556257726,
+   "bss": -0.052643808699553984,
+   "auc": 0.7979691876750701,
+   "hit_rate": 0.7222222222222222,
+   "false_alarm_ratio": 0.5666666666666667,
+   "warnings": 60,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 214,
+     "observed": 0.04672897196261682,
+     "forecast": 0.1460853189090702
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 46,
+     "observed": 0.34782608695652173,
+     "forecast": 0.40746169504912005
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 14,
+     "observed": 0.7142857142857143,
+     "forecast": 0.6202681660652161
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 0 in 10 times (214 forecasts).",
+    "When we said medium chance (30-60%), it happened 3 in 10 times (46 forecasts).",
+    "When we said high chance (over 60%), it happened 7 in 10 times (14 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 2,
+   "state": "Madhya Pradesh",
+   "tier": "validated",
+   "n": 1233,
+   "events": 315,
+   "base_rate": 0.25547445255474455,
+   "brier": 0.1618120123972955,
+   "brier_ref": 0.16590153465392968,
+   "bss": 0.024650297932233722,
+   "auc": 0.791842168966352,
+   "hit_rate": 0.7682539682539683,
+   "false_alarm_ratio": 0.5416666666666666,
+   "warnings": 528,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 705,
+     "observed": 0.10354609929078014,
+     "forecast": 0.20186377439304445
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 243,
+     "observed": 0.345679012345679,
+     "forecast": 0.3872953455879855
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 285,
+     "observed": 0.5543859649122806,
+     "forecast": 0.714545490658074
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (705 forecasts).",
+    "When we said medium chance (30-60%), it happened 3 in 10 times (243 forecasts).",
+    "When we said high chance (over 60%), it happened 6 in 10 times (285 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 2,
+   "state": "Maharashtra",
+   "tier": "validated",
+   "n": 1781,
+   "events": 631,
+   "base_rate": 0.35429533969679955,
+   "brier": 0.19983505904250234,
+   "brier_ref": 0.21292433059918278,
+   "bss": 0.06147381804534213,
+   "auc": 0.7139874595190518,
+   "hit_rate": 0.7749603803486529,
+   "false_alarm_ratio": 0.5298076923076923,
+   "warnings": 1040,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 741,
+     "observed": 0.19163292847503374,
+     "forecast": 0.24606375314808085
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 791,
+     "observed": 0.3969658659924147,
+     "forecast": 0.41157772545567356
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 249,
+     "observed": 0.7028112449799196,
+     "forecast": 0.6847604685519115
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 2 in 10 times (741 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (791 forecasts).",
+    "When we said high chance (over 60%), it happened 7 in 10 times (249 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 2,
+   "state": "Uttar Pradesh",
+   "tier": "validated",
+   "n": 822,
+   "events": 304,
+   "base_rate": 0.36982968369829683,
+   "brier": 0.16761974217006254,
+   "brier_ref": 0.15150468424964728,
+   "bss": -0.10636673050888046,
+   "auc": 0.804142958748222,
+   "hit_rate": 0.743421052631579,
+   "false_alarm_ratio": 0.3067484662576687,
+   "warnings": 326,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 496,
+     "observed": 0.15725806451612903,
+     "forecast": 0.1946174695396856
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 135,
+     "observed": 0.6370370370370371,
+     "forecast": 0.43719096846050687
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 191,
+     "observed": 0.7329842931937173,
+     "forecast": 0.7247061570277389
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 2 in 10 times (496 forecasts).",
+    "When we said medium chance (30-60%), it happened 6 in 10 times (135 forecasts).",
+    "When we said high chance (over 60%), it happened 7 in 10 times (191 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 3,
+   "state": "All validated states",
+   "tier": "validated",
+   "n": 4050,
+   "events": 1626,
+   "base_rate": 0.4014814814814815,
+   "brier": 0.18944140408959056,
+   "brier_ref": 0.19027461308630106,
+   "bss": 0.004378981426873763,
+   "auc": 0.7715262301137863,
+   "hit_rate": 0.9132841328413284,
+   "false_alarm_ratio": 0.49126413155190135,
+   "warnings": 2919,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 1131,
+     "observed": 0.1246684350132626,
+     "forecast": 0.17598664305715514
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 2005,
+     "observed": 0.400997506234414,
+     "forecast": 0.4330833345874587
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 914,
+     "observed": 0.7450765864332604,
+     "forecast": 0.7864453967342753
+    }
+   ],
+   "verdict": "about the same",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (1,131 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (2,005 forecasts).",
+    "When we said high chance (over 60%), it happened 7 in 10 times (914 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 3,
+   "state": "Bihar",
+   "tier": "validated",
+   "n": 270,
+   "events": 53,
+   "base_rate": 0.1962962962962963,
+   "brier": 0.10882792586979081,
+   "brier_ref": 0.10582547300676055,
+   "bss": -0.02837174054339875,
+   "auc": 0.8223632727588905,
+   "hit_rate": 0.7735849056603774,
+   "false_alarm_ratio": 0.5340909090909091,
+   "warnings": 88,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 182,
+     "observed": 0.06593406593406594,
+     "forecast": 0.11280927710890115
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 62,
+     "observed": 0.3064516129032258,
+     "forecast": 0.41914003222219404
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 26,
+     "observed": 0.8461538461538461,
+     "forecast": 0.744748014670152
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (182 forecasts).",
+    "When we said medium chance (30-60%), it happened 3 in 10 times (62 forecasts).",
+    "When we said high chance (over 60%), it happened 8 in 10 times (26 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 3,
+   "state": "Madhya Pradesh",
+   "tier": "validated",
+   "n": 1215,
+   "events": 412,
+   "base_rate": 0.3390946502057613,
+   "brier": 0.17066044462133959,
+   "brier_ref": 0.17457684152224345,
+   "bss": 0.022433656530582047,
+   "auc": 0.802477662648563,
+   "hit_rate": 0.883495145631068,
+   "false_alarm_ratio": 0.5278858625162127,
+   "warnings": 771,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 444,
+     "observed": 0.10810810810810811,
+     "forecast": 0.17162310533426903
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 483,
+     "observed": 0.3146997929606625,
+     "forecast": 0.41842655019977326
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 288,
+     "observed": 0.7361111111111112,
+     "forecast": 0.8160963946332535
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (444 forecasts).",
+    "When we said medium chance (30-60%), it happened 3 in 10 times (483 forecasts).",
+    "When we said high chance (over 60%), it happened 7 in 10 times (288 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 3,
+   "state": "Maharashtra",
+   "tier": "validated",
+   "n": 1755,
+   "events": 791,
+   "base_rate": 0.45071225071225074,
+   "brier": 0.2229464858548655,
+   "brier_ref": 0.2302334973323589,
+   "bss": 0.031650526799643086,
+   "auc": 0.6861141419811049,
+   "hit_rate": 0.9785082174462706,
+   "false_alarm_ratio": 0.5132075471698113,
+   "warnings": 1590,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 165,
+     "observed": 0.10303030303030303,
+     "forecast": 0.2553989303834511
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 1205,
+     "observed": 0.42406639004149377,
+     "forecast": 0.43906355020416227
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 385,
+     "observed": 0.6831168831168831,
+     "forecast": 0.7521970877399692
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (165 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (1,205 forecasts).",
+    "When we said high chance (over 60%), it happened 7 in 10 times (385 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 3,
+   "state": "Uttar Pradesh",
+   "tier": "validated",
+   "n": 810,
+   "events": 370,
+   "base_rate": 0.4567901234567901,
+   "brier": 0.1718896588738045,
+   "brier_ref": 0.15539340125910917,
+   "bss": -0.1061580316862285,
+   "auc": 0.8119963144963145,
+   "hit_rate": 0.827027027027027,
+   "false_alarm_ratio": 0.34893617021276596,
+   "warnings": 470,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 340,
+     "observed": 0.18823529411764706,
+     "forecast": 0.1769650664180517
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 255,
+     "observed": 0.47843137254901963,
+     "forecast": 0.4359756945395002
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 215,
+     "observed": 0.8558139534883721,
+     "forecast": 0.8130976920904115
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 2 in 10 times (340 forecasts).",
+    "When we said medium chance (30-60%), it happened 5 in 10 times (255 forecasts).",
+    "When we said high chance (over 60%), it happened 9 in 10 times (215 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 4,
+   "state": "All validated states",
+   "tier": "validated",
+   "n": 4020,
+   "events": 1916,
+   "base_rate": 0.4766169154228856,
+   "brier": 0.19451885639788022,
+   "brier_ref": 0.19261183943161622,
+   "bss": -0.009900829418853396,
+   "auc": 0.7736203830858014,
+   "hit_rate": 0.9441544885177453,
+   "false_alarm_ratio": 0.45031905195989064,
+   "warnings": 3291,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 729,
+     "observed": 0.1467764060356653,
+     "forecast": 0.16811345668895417
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 1852,
+     "observed": 0.3968682505399568,
+     "forecast": 0.45200868853675624
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 1439,
+     "observed": 0.7463516330785267,
+     "forecast": 0.7852361452836307
+    }
+   ],
+   "verdict": "about the same",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (729 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (1,852 forecasts).",
+    "When we said high chance (over 60%), it happened 7 in 10 times (1,439 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 4,
+   "state": "Bihar",
+   "tier": "validated",
+   "n": 268,
+   "events": 67,
+   "base_rate": 0.25,
+   "brier": 0.11851856534055999,
+   "brier_ref": 0.11575134947160969,
+   "bss": -0.023906553846519296,
+   "auc": 0.8225291453181852,
+   "hit_rate": 0.7761194029850746,
+   "false_alarm_ratio": 0.49514563106796117,
+   "warnings": 103,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 165,
+     "observed": 0.09090909090909091,
+     "forecast": 0.12496001530777325
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 65,
+     "observed": 0.3076923076923077,
+     "forecast": 0.4170821795096764
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 38,
+     "observed": 0.8421052631578947,
+     "forecast": 0.7965801687617051
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (165 forecasts).",
+    "When we said medium chance (30-60%), it happened 3 in 10 times (65 forecasts).",
+    "When we said high chance (over 60%), it happened 8 in 10 times (38 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 4,
+   "state": "Madhya Pradesh",
+   "tier": "validated",
+   "n": 1206,
+   "events": 500,
+   "base_rate": 0.41459369817578773,
+   "brier": 0.18090289292405362,
+   "brier_ref": 0.18408985047816248,
+   "bss": 0.01731196774743926,
+   "auc": 0.796556657223796,
+   "hit_rate": 0.938,
+   "false_alarm_ratio": 0.4748040313549832,
+   "warnings": 893,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 313,
+     "observed": 0.09904153354632587,
+     "forecast": 0.17496077126017012
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 498,
+     "observed": 0.35542168674698793,
+     "forecast": 0.4321458531790469
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 395,
+     "observed": 0.739240506329114,
+     "forecast": 0.8145629344107229
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (313 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (498 forecasts).",
+    "When we said high chance (over 60%), it happened 7 in 10 times (395 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 4,
+   "state": "Maharashtra",
+   "tier": "validated",
+   "n": 1742,
+   "events": 919,
+   "base_rate": 0.5275545350172216,
+   "brier": 0.22350821287057804,
+   "brier_ref": 0.2262318115096348,
+   "bss": 0.01203897286098854,
+   "auc": 0.6970014689219224,
+   "hit_rate": 1.0,
+   "false_alarm_ratio": 0.4684788895315211,
+   "warnings": 1729,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 13,
+     "observed": 0.0,
+     "forecast": 0.23592290396873766
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 1016,
+     "observed": 0.41633858267716534,
+     "forecast": 0.4746169786694951
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 713,
+     "observed": 0.6956521739130435,
+     "forecast": 0.7593089122257259
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 0 in 10 times (13 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (1,016 forecasts).",
+    "When we said high chance (over 60%), it happened 7 in 10 times (713 forecasts)."
+   ]
+  },
+  {
+   "hazard": "dry",
+   "week": 4,
+   "state": "Uttar Pradesh",
+   "tier": "validated",
+   "n": 804,
+   "events": 430,
+   "base_rate": 0.5348258706467661,
+   "brier": 0.17746595960354822,
+   "brier_ref": 0.15817171334609204,
+   "bss": -0.12198291242656567,
+   "auc": 0.8013804253202338,
+   "hit_rate": 0.858139534883721,
+   "false_alarm_ratio": 0.3480565371024735,
+   "warnings": 566,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 238,
+     "observed": 0.25630252100840334,
+     "forecast": 0.18532179934637888
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 273,
+     "observed": 0.42124542124542125,
+     "forecast": 0.4124185505149129
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 293,
+     "observed": 0.8668941979522184,
+     "forecast": 0.8073213417782311
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 3 in 10 times (238 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (273 forecasts).",
+    "When we said high chance (over 60%), it happened 9 in 10 times (293 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 1,
+   "state": "All validated states",
+   "tier": "validated",
+   "n": 4140,
+   "events": 212,
+   "base_rate": 0.051207729468599035,
+   "brier": 0.046844271791664165,
+   "brier_ref": 0.047785623748666954,
+   "bss": 0.019699480369952282,
+   "auc": 0.7528040099143066,
+   "hit_rate": 0.0,
+   "false_alarm_ratio": null,
+   "warnings": 0,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 4140,
+     "observed": 0.051207729468599035,
+     "forecast": 0.04528973799149375
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (4,140 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 1,
+   "state": "Bihar",
+   "tier": "validated",
+   "n": 276,
+   "events": 11,
+   "base_rate": 0.03985507246376811,
+   "brier": 0.03828450022107774,
+   "brier_ref": 0.037714070657959384,
+   "bss": -0.015125112541994223,
+   "auc": 0.6499142367066896,
+   "hit_rate": 0.0,
+   "false_alarm_ratio": null,
+   "warnings": 0,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 276,
+     "observed": 0.03985507246376811,
+     "forecast": 0.055531998624707965
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 0 in 10 times (276 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 1,
+   "state": "Madhya Pradesh",
+   "tier": "validated",
+   "n": 1242,
+   "events": 91,
+   "base_rate": 0.07326892109500806,
+   "brier": 0.0649821793353189,
+   "brier_ref": 0.0658977136403022,
+   "bss": 0.013893263580898596,
+   "auc": 0.7384166658710534,
+   "hit_rate": 0.0,
+   "false_alarm_ratio": null,
+   "warnings": 0,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 1242,
+     "observed": 0.07326892109500806,
+     "forecast": 0.07489116524343173
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (1,242 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 1,
+   "state": "Maharashtra",
+   "tier": "validated",
+   "n": 1794,
+   "events": 73,
+   "base_rate": 0.04069119286510591,
+   "brier": 0.037447945569527935,
+   "brier_ref": 0.03885222818900305,
+   "bss": 0.036144197770170416,
+   "auc": 0.8465649948659986,
+   "hit_rate": 0.0,
+   "false_alarm_ratio": null,
+   "warnings": 0,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 1794,
+     "observed": 0.04069119286510591,
+     "forecast": 0.021652195166065508
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 0 in 10 times (1,794 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 1,
+   "state": "Uttar Pradesh",
+   "tier": "validated",
+   "n": 828,
+   "events": 37,
+   "base_rate": 0.04468599033816425,
+   "brier": 0.04284937448100605,
+   "brier_ref": 0.043330363654055064,
+   "bss": 0.011100510877064873,
+   "auc": 0.6125158027812895,
+   "hit_rate": 0.0,
+   "false_alarm_ratio": null,
+   "warnings": 0,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 828,
+     "observed": 0.04468599033816425,
+     "forecast": 0.04868818635760991
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 0 in 10 times (828 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 2,
+   "state": "All validated states",
+   "tier": "validated",
+   "n": 4110,
+   "events": 399,
+   "base_rate": 0.09708029197080292,
+   "brier": 0.0841907069929271,
+   "brier_ref": 0.08358930922957215,
+   "bss": -0.007194673205197288,
+   "auc": 0.7349879009028905,
+   "hit_rate": 0.045112781954887216,
+   "false_alarm_ratio": 0.7906976744186046,
+   "warnings": 86,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 4024,
+     "observed": 0.09468190854870775,
+     "forecast": 0.07684045950821962
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 86,
+     "observed": 0.20930232558139536,
+     "forecast": 0.3834444897812466
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "about the same",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (4,024 forecasts).",
+    "When we said medium chance (30-60%), it happened 2 in 10 times (86 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 2,
+   "state": "Bihar",
+   "tier": "validated",
+   "n": 274,
+   "events": 20,
+   "base_rate": 0.072992700729927,
+   "brier": 0.06535163185105639,
+   "brier_ref": 0.06366908751994038,
+   "bss": -0.026426393037108475,
+   "auc": 0.7059055118110236,
+   "hit_rate": 0.0,
+   "false_alarm_ratio": null,
+   "warnings": 0,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 274,
+     "observed": 0.072992700729927,
+     "forecast": 0.09272737378920734
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (274 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 2,
+   "state": "Madhya Pradesh",
+   "tier": "validated",
+   "n": 1233,
+   "events": 178,
+   "base_rate": 0.14436334144363341,
+   "brier": 0.1208204886859546,
+   "brier_ref": 0.11562026091724034,
+   "bss": -0.044976786312880934,
+   "auc": 0.6795968901432451,
+   "hit_rate": 0.10112359550561797,
+   "false_alarm_ratio": 0.7906976744186046,
+   "warnings": 86,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 1147,
+     "observed": 0.13949433304272013,
+     "forecast": 0.12169888513219569
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 86,
+     "observed": 0.20930232558139536,
+     "forecast": 0.3834444897812466
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (1,147 forecasts).",
+    "When we said medium chance (30-60%), it happened 2 in 10 times (86 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 2,
+   "state": "Maharashtra",
+   "tier": "validated",
+   "n": 1781,
+   "events": 120,
+   "base_rate": 0.06737787759685569,
+   "brier": 0.06014542444829097,
+   "brier_ref": 0.06231781831007376,
+   "bss": 0.03485991520071596,
+   "auc": 0.8010962271723862,
+   "hit_rate": 0.0,
+   "false_alarm_ratio": null,
+   "warnings": 0,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 1781,
+     "observed": 0.06737787759685569,
+     "forecast": 0.03932609468288532
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (1,781 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 2,
+   "state": "Uttar Pradesh",
+   "tier": "validated",
+   "n": 822,
+   "events": 81,
+   "base_rate": 0.09854014598540146,
+   "brier": 0.08762383834738773,
+   "brier_ref": 0.08827118592686035,
+   "bss": 0.00733362277480909,
+   "auc": 0.6103197214308326,
+   "hit_rate": 0.0,
+   "false_alarm_ratio": null,
+   "warnings": 0,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 822,
+     "observed": 0.09854014598540146,
+     "forecast": 0.09023152404621135
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "about the same",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (822 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 3,
+   "state": "All validated states",
+   "tier": "validated",
+   "n": 4050,
+   "events": 565,
+   "base_rate": 0.13950617283950617,
+   "brier": 0.11606589272525152,
+   "brier_ref": 0.11238547830954679,
+   "bss": -0.032748131440679895,
+   "auc": 0.7125902413631112,
+   "hit_rate": 0.15221238938053097,
+   "false_alarm_ratio": 0.7463126843657817,
+   "warnings": 339,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 3711,
+     "observed": 0.12907572082996496,
+     "forecast": 0.09935372313060423
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 339,
+     "observed": 0.2536873156342183,
+     "forecast": 0.37612134332502134
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (3,711 forecasts).",
+    "When we said medium chance (30-60%), it happened 3 in 10 times (339 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 3,
+   "state": "Bihar",
+   "tier": "validated",
+   "n": 270,
+   "events": 30,
+   "base_rate": 0.1111111111111111,
+   "brier": 0.0917109684631985,
+   "brier_ref": 0.08924845720271211,
+   "bss": -0.027591639538297352,
+   "auc": 0.7388888888888889,
+   "hit_rate": 0.1,
+   "false_alarm_ratio": 0.625,
+   "warnings": 8,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 262,
+     "observed": 0.10305343511450382,
+     "forecast": 0.13406547858514858
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 8,
+     "observed": 0.375,
+     "forecast": 0.3105946369469166
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (262 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 3,
+   "state": "Madhya Pradesh",
+   "tier": "validated",
+   "n": 1215,
+   "events": 237,
+   "base_rate": 0.19506172839506172,
+   "brier": 0.15501428372116252,
+   "brier_ref": 0.14368192987436645,
+   "bss": -0.07887111383251133,
+   "auc": 0.6553782368218961,
+   "hit_rate": 0.3333333333333333,
+   "false_alarm_ratio": 0.7576687116564417,
+   "warnings": 326,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 889,
+     "observed": 0.17772778402699663,
+     "forecast": 0.13934134228911388
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 326,
+     "observed": 0.24233128834355827,
+     "forecast": 0.37879285390025996
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 2 in 10 times (889 forecasts).",
+    "When we said medium chance (30-60%), it happened 2 in 10 times (326 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 3,
+   "state": "Maharashtra",
+   "tier": "validated",
+   "n": 1755,
+   "events": 183,
+   "base_rate": 0.10427350427350428,
+   "brier": 0.09146097458906872,
+   "brier_ref": 0.09091699484517606,
+   "bss": -0.005983256978731255,
+   "auc": 0.7694402730849984,
+   "hit_rate": 0.0,
+   "false_alarm_ratio": null,
+   "warnings": 0,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 1755,
+     "observed": 0.10427350427350428,
+     "forecast": 0.05796642228536456
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "about the same",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (1,755 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 3,
+   "state": "Uttar Pradesh",
+   "tier": "validated",
+   "n": 810,
+   "events": 115,
+   "base_rate": 0.1419753086419753,
+   "brier": 0.1190722702804655,
+   "brier_ref": 0.11966818883739881,
+   "bss": 0.004979757467066026,
+   "auc": 0.6288958398498592,
+   "hit_rate": 0.034782608695652174,
+   "false_alarm_ratio": 0.2,
+   "warnings": 5,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 805,
+     "observed": 0.13788819875776398,
+     "forecast": 0.1341254493695979
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 5,
+     "observed": 0.8,
+     "forecast": 0.30678158402442934
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "about the same",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (805 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 4,
+   "state": "All validated states",
+   "tier": "validated",
+   "n": 4020,
+   "events": 721,
+   "base_rate": 0.17935323383084578,
+   "brier": 0.14313274986340516,
+   "brier_ref": 0.13591123636140173,
+   "bss": -0.05313404318389603,
+   "auc": 0.6877814442993064,
+   "hit_rate": 0.231622746185853,
+   "false_alarm_ratio": 0.7202680067001676,
+   "warnings": 597,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 3423,
+     "observed": 0.16184633362547474,
+     "forecast": 0.12027617654399395
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 597,
+     "observed": 0.2797319932998325,
+     "forecast": 0.4016277719682185
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 2 in 10 times (3,423 forecasts).",
+    "When we said medium chance (30-60%), it happened 3 in 10 times (597 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 4,
+   "state": "Bihar",
+   "tier": "validated",
+   "n": 268,
+   "events": 40,
+   "base_rate": 0.14925373134328357,
+   "brier": 0.11611268530629801,
+   "brier_ref": 0.11261115911144345,
+   "bss": -0.03109395394278236,
+   "auc": 0.706030701754386,
+   "hit_rate": 0.325,
+   "false_alarm_ratio": 0.717391304347826,
+   "warnings": 46,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 222,
+     "observed": 0.12162162162162163,
+     "forecast": 0.15826542796315374
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 46,
+     "observed": 0.2826086956521739,
+     "forecast": 0.33921498708103015
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (222 forecasts).",
+    "When we said medium chance (30-60%), it happened 3 in 10 times (46 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 4,
+   "state": "Madhya Pradesh",
+   "tier": "validated",
+   "n": 1206,
+   "events": 303,
+   "base_rate": 0.2512437810945274,
+   "brier": 0.18348993044747858,
+   "brier_ref": 0.16685090660764373,
+   "bss": -0.09972390428157607,
+   "auc": 0.6429302398678406,
+   "hit_rate": 0.48184818481848185,
+   "false_alarm_ratio": 0.6932773109243697,
+   "warnings": 476,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 730,
+     "observed": 0.21506849315068494,
+     "forecast": 0.15905608620035322
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 476,
+     "observed": 0.3067226890756303,
+     "forecast": 0.4180495812862861
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 2 in 10 times (730 forecasts).",
+    "When we said medium chance (30-60%), it happened 3 in 10 times (476 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 4,
+   "state": "Maharashtra",
+   "tier": "validated",
+   "n": 1742,
+   "events": 233,
+   "base_rate": 0.13375430539609645,
+   "brier": 0.11520597237157006,
+   "brier_ref": 0.11327969617813115,
+   "bss": -0.01700460239944368,
+   "auc": 0.7346279973947446,
+   "hit_rate": 0.0,
+   "false_alarm_ratio": 1.0,
+   "warnings": 14,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 1728,
+     "observed": 0.13483796296296297,
+     "forecast": 0.0812418905789619
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 14,
+     "observed": 0.0,
+     "forecast": 0.32917866323675427
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (1,728 forecasts).",
+    "When we said medium chance (30-60%), it happened 0 in 10 times (14 forecasts)."
+   ]
+  },
+  {
+   "hazard": "heavy",
+   "week": 4,
+   "state": "Uttar Pradesh",
+   "tier": "validated",
+   "n": 804,
+   "events": 145,
+   "base_rate": 0.18034825870646767,
+   "brier": 0.1521116850719734,
+   "brier_ref": 0.14630342713911107,
+   "bss": -0.03970008116993462,
+   "auc": 0.5436607189576683,
+   "hit_rate": 0.05517241379310345,
+   "false_alarm_ratio": 0.8688524590163934,
+   "warnings": 61,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 743,
+     "observed": 0.18438761776581428,
+     "forecast": 0.16160632228205535
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 61,
+     "observed": 0.13114754098360656,
+     "forecast": 0.33717686035594
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 2 in 10 times (743 forecasts).",
+    "When we said medium chance (30-60%), it happened 1 in 10 times (61 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 1,
+   "state": "All validated states",
+   "tier": "validated",
+   "n": 1432,
+   "events": 194,
+   "base_rate": 0.13547486033519554,
+   "brier": 0.10512228503548138,
+   "brier_ref": 0.10854532221719054,
+   "bss": 0.03153555686959908,
+   "auc": 0.7562184601035924,
+   "hit_rate": 0.23195876288659795,
+   "false_alarm_ratio": 0.6017699115044248,
+   "warnings": 113,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 1319,
+     "observed": 0.11296436694465505,
+     "forecast": 0.09614636573920746
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 113,
+     "observed": 0.39823008849557523,
+     "forecast": 0.3777152621640568
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (1,319 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (113 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 1,
+   "state": "Bihar",
+   "tier": "validated",
+   "n": 53,
+   "events": 12,
+   "base_rate": 0.22641509433962265,
+   "brier": 0.15524683848472595,
+   "brier_ref": 0.14941413523559458,
+   "bss": -0.0390371582978708,
+   "auc": 0.7479674796747967,
+   "hit_rate": 0.5833333333333334,
+   "false_alarm_ratio": 0.5625,
+   "warnings": 16,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 37,
+     "observed": 0.13513513513513514,
+     "forecast": 0.12551517673843615
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 16,
+     "observed": 0.4375,
+     "forecast": 0.3830619789659977
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (37 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (16 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 1,
+   "state": "Madhya Pradesh",
+   "tier": "validated",
+   "n": 359,
+   "events": 63,
+   "base_rate": 0.17548746518105848,
+   "brier": 0.12105212128630811,
+   "brier_ref": 0.13300345113828277,
+   "bss": 0.08985729129350895,
+   "auc": 0.775096525096525,
+   "hit_rate": 0.3492063492063492,
+   "false_alarm_ratio": 0.2413793103448276,
+   "warnings": 29,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 330,
+     "observed": 0.12424242424242424,
+     "forecast": 0.097624515392112
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 29,
+     "observed": 0.7586206896551724,
+     "forecast": 0.374927562886271
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (330 forecasts).",
+    "When we said medium chance (30-60%), it happened 8 in 10 times (29 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 1,
+   "state": "Maharashtra",
+   "tier": "validated",
+   "n": 692,
+   "events": 73,
+   "base_rate": 0.10549132947976879,
+   "brier": 0.08940254068164552,
+   "brier_ref": 0.09064121463890423,
+   "bss": 0.013665681359118276,
+   "auc": 0.7457897182818067,
+   "hit_rate": 0.0,
+   "false_alarm_ratio": null,
+   "warnings": 0,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 692,
+     "observed": 0.10549132947976879,
+     "forecast": 0.08855991581228771
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (692 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 1,
+   "state": "Uttar Pradesh",
+   "tier": "validated",
+   "n": 328,
+   "events": 46,
+   "base_rate": 0.1402439024390244,
+   "brier": 0.11275231718791336,
+   "brier_ref": 0.1129450998742837,
+   "bss": 0.001706870741492228,
+   "auc": 0.7490749306197965,
+   "hit_rate": 0.34782608695652173,
+   "false_alarm_ratio": 0.7647058823529411,
+   "warnings": 68,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 260,
+     "observed": 0.11538461538461539,
+     "forecast": 0.11028247326612473
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 68,
+     "observed": 0.23529411764705882,
+     "forecast": 0.3776460829026559
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "about the same",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (260 forecasts).",
+    "When we said medium chance (30-60%), it happened 2 in 10 times (68 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 2,
+   "state": "All validated states",
+   "tier": "validated",
+   "n": 1425,
+   "events": 380,
+   "base_rate": 0.26666666666666666,
+   "brier": 0.17266200972796164,
+   "brier_ref": 0.17279834981329795,
+   "bss": 0.0007890126583015578,
+   "auc": 0.7450402921178545,
+   "hit_rate": 0.5078947368421053,
+   "false_alarm_ratio": 0.5257985257985258,
+   "warnings": 407,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 1018,
+     "observed": 0.18369351669941061,
+     "forecast": 0.12965201314224006
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 407,
+     "observed": 0.4742014742014742,
+     "forecast": 0.49195079553039417
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "about the same",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 2 in 10 times (1,018 forecasts).",
+    "When we said medium chance (30-60%), it happened 5 in 10 times (407 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 2,
+   "state": "Bihar",
+   "tier": "validated",
+   "n": 53,
+   "events": 20,
+   "base_rate": 0.37735849056603776,
+   "brier": 0.21514840476855848,
+   "brier_ref": 0.1927398954912401,
+   "bss": -0.11626295230785177,
+   "auc": 0.6818181818181818,
+   "hit_rate": 0.7,
+   "false_alarm_ratio": 0.5,
+   "warnings": 28,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 25,
+     "observed": 0.24,
+     "forecast": 0.14687392592430115
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 28,
+     "observed": 0.5,
+     "forecast": 0.5368321261235646
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 2 in 10 times (25 forecasts).",
+    "When we said medium chance (30-60%), it happened 5 in 10 times (28 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 2,
+   "state": "Madhya Pradesh",
+   "tier": "validated",
+   "n": 359,
+   "events": 129,
+   "base_rate": 0.3593314763231198,
+   "brier": 0.18111537420925602,
+   "brier_ref": 0.20386082520254833,
+   "bss": 0.11157342746304155,
+   "auc": 0.8033367037411526,
+   "hit_rate": 0.6666666666666666,
+   "false_alarm_ratio": 0.381294964028777,
+   "warnings": 139,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 220,
+     "observed": 0.19545454545454546,
+     "forecast": 0.11955258907242254
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 139,
+     "observed": 0.6187050359712231,
+     "forecast": 0.48747741747245515
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 2 in 10 times (220 forecasts).",
+    "When we said medium chance (30-60%), it happened 6 in 10 times (139 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 2,
+   "state": "Maharashtra",
+   "tier": "validated",
+   "n": 685,
+   "events": 144,
+   "base_rate": 0.21021897810218979,
+   "brier": 0.1601075349012637,
+   "brier_ref": 0.1580966064266111,
+   "bss": -0.012719618213854922,
+   "auc": 0.7037186794002875,
+   "hit_rate": 0.18055555555555555,
+   "false_alarm_ratio": 0.59375,
+   "warnings": 64,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 621,
+     "observed": 0.19001610305958133,
+     "forecast": 0.13385286932022292
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 64,
+     "observed": 0.40625,
+     "forecast": 0.3723240988329053
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 2 in 10 times (621 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (64 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 2,
+   "state": "Uttar Pradesh",
+   "tier": "validated",
+   "n": 328,
+   "events": 87,
+   "base_rate": 0.2652439024390244,
+   "brier": 0.18276346847903405,
+   "brier_ref": 0.16628116577125127,
+   "bss": -0.09912308848289575,
+   "auc": 0.7219917012448133,
+   "hit_rate": 0.7701149425287356,
+   "false_alarm_ratio": 0.6193181818181818,
+   "warnings": 176,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 152,
+     "observed": 0.13157894736842105,
+     "forecast": 0.12427434070329917
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 176,
+     "observed": 0.3806818181818182,
+     "forecast": 0.5318441528149627
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (152 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (176 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 3,
+   "state": "All validated states",
+   "tier": "validated",
+   "n": 1411,
+   "events": 545,
+   "base_rate": 0.3862508858965273,
+   "brier": 0.20960007830170777,
+   "brier_ref": 0.20672904429057762,
+   "bss": -0.01388790830520481,
+   "auc": 0.7089772655041634,
+   "hit_rate": 0.7302752293577982,
+   "false_alarm_ratio": 0.4783748361730013,
+   "warnings": 763,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 648,
+     "observed": 0.22685185185185186,
+     "forecast": 0.19773892399475532
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 763,
+     "observed": 0.5216251638269986,
+     "forecast": 0.47532147934677405
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 2 in 10 times (648 forecasts).",
+    "When we said medium chance (30-60%), it happened 5 in 10 times (763 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 3,
+   "state": "Bihar",
+   "tier": "validated",
+   "n": 53,
+   "events": 28,
+   "base_rate": 0.5283018867924528,
+   "brier": 0.23548679071139986,
+   "brier_ref": 0.20892817864998922,
+   "bss": -0.1271183821781332,
+   "auc": 0.6521428571428571,
+   "hit_rate": 0.8928571428571429,
+   "false_alarm_ratio": 0.4186046511627907,
+   "warnings": 43,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 10,
+     "observed": 0.3,
+     "forecast": 0.28010472655296326
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 43,
+     "observed": 0.5813953488372093,
+     "forecast": 0.48224274363628655
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 3 in 10 times (10 forecasts).",
+    "When we said medium chance (30-60%), it happened 6 in 10 times (43 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 3,
+   "state": "Madhya Pradesh",
+   "tier": "validated",
+   "n": 359,
+   "events": 182,
+   "base_rate": 0.5069637883008357,
+   "brier": 0.2079813969508766,
+   "brier_ref": 0.2132122863849151,
+   "bss": 0.024533714837591925,
+   "auc": 0.7803439498354753,
+   "hit_rate": 0.8296703296703297,
+   "false_alarm_ratio": 0.3406113537117904,
+   "warnings": 229,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 130,
+     "observed": 0.23846153846153847,
+     "forecast": 0.19590606551903944
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 229,
+     "observed": 0.6593886462882096,
+     "forecast": 0.5018078725150579
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 2 in 10 times (130 forecasts).",
+    "When we said medium chance (30-60%), it happened 7 in 10 times (229 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 3,
+   "state": "Maharashtra",
+   "tier": "validated",
+   "n": 671,
+   "events": 210,
+   "base_rate": 0.31296572280178836,
+   "brier": 0.2097180787682332,
+   "brier_ref": 0.20355520269886374,
+   "bss": -0.03027619037812923,
+   "auc": 0.6368092139241814,
+   "hit_rate": 0.5142857142857142,
+   "false_alarm_ratio": 0.5846153846153846,
+   "warnings": 260,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 411,
+     "observed": 0.24817518248175183,
+     "forecast": 0.19527495387769384
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 260,
+     "observed": 0.4153846153846154,
+     "forecast": 0.3884009635219207
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 2 in 10 times (411 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (260 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 3,
+   "state": "Uttar Pradesh",
+   "tier": "validated",
+   "n": 328,
+   "events": 125,
+   "base_rate": 0.38109756097560976,
+   "brier": 0.20694743358889112,
+   "brier_ref": 0.20577053720254113,
+   "bss": -0.005719460144051558,
+   "auc": 0.6930049261083744,
+   "hit_rate": 0.912,
+   "false_alarm_ratio": 0.5064935064935064,
+   "warnings": 231,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 97,
+     "observed": 0.1134020618556701,
+     "forecast": 0.20214413321509803
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 231,
+     "observed": 0.4935064935064935,
+     "forecast": 0.5456086469419075
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "about the same",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 1 in 10 times (97 forecasts).",
+    "When we said medium chance (30-60%), it happened 5 in 10 times (231 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 4,
+   "state": "All validated states",
+   "tier": "validated",
+   "n": 1404,
+   "events": 703,
+   "base_rate": 0.5007122507122507,
+   "brier": 0.23354571648984368,
+   "brier_ref": 0.21712638352824498,
+   "bss": -0.07562108618394947,
+   "auc": 0.667429987236279,
+   "hit_rate": 1.0,
+   "false_alarm_ratio": 0.4864864864864865,
+   "warnings": 1369,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 35,
+     "observed": 0.0,
+     "forecast": 0.2606635093688965
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 1132,
+     "observed": 0.46996466431095407,
+     "forecast": 0.4088490292587887
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 237,
+     "observed": 0.7215189873417721,
+     "forecast": 0.608017930501624
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 0 in 10 times (35 forecasts).",
+    "When we said medium chance (30-60%), it happened 5 in 10 times (1,132 forecasts).",
+    "When we said high chance (over 60%), it happened 7 in 10 times (237 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 4,
+   "state": "Bihar",
+   "tier": "validated",
+   "n": 53,
+   "events": 36,
+   "base_rate": 0.6792452830188679,
+   "brier": 0.2312591586392955,
+   "brier_ref": 0.18210564113198074,
+   "bss": -0.26991759948661254,
+   "auc": 0.6683006535947712,
+   "hit_rate": 1.0,
+   "false_alarm_ratio": 0.32075471698113206,
+   "warnings": 53,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 30,
+     "observed": 0.5666666666666667,
+     "forecast": 0.45274117787679036
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 23,
+     "observed": 0.8260869565217391,
+     "forecast": 0.6093970744506173
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said medium chance (30-60%), it happened 6 in 10 times (30 forecasts).",
+    "When we said high chance (over 60%), it happened 8 in 10 times (23 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 4,
+   "state": "Madhya Pradesh",
+   "tier": "validated",
+   "n": 359,
+   "events": 229,
+   "base_rate": 0.637883008356546,
+   "brier": 0.23236535605779965,
+   "brier_ref": 0.20180530343947536,
+   "bss": -0.15143334737726422,
+   "auc": 0.7213301981860933,
+   "hit_rate": 1.0,
+   "false_alarm_ratio": 0.362116991643454,
+   "warnings": 359,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 302,
+     "observed": 0.5827814569536424,
+     "forecast": 0.4489626159139027
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 57,
+     "observed": 0.9298245614035088,
+     "forecast": 0.6092786663456967
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said medium chance (30-60%), it happened 6 in 10 times (302 forecasts).",
+    "When we said high chance (over 60%), it happened 9 in 10 times (57 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 4,
+   "state": "Maharashtra",
+   "tier": "validated",
+   "n": 664,
+   "events": 266,
+   "base_rate": 0.4006024096385542,
+   "brier": 0.23967669849755094,
+   "brier_ref": 0.22255795096875258,
+   "bss": -0.0769181575148572,
+   "auc": 0.5462226546265161,
+   "hit_rate": 1.0,
+   "false_alarm_ratio": 0.5771065182829889,
+   "warnings": 629,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 35,
+     "observed": 0.0,
+     "forecast": 0.2606635093688965
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 629,
+     "observed": 0.42289348171701113,
+     "forecast": 0.3769798897597672
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    }
+   ],
+   "verdict": "worse",
+   "sentences": [
+    "When we said low chance (under 30%), it happened 0 in 10 times (35 forecasts).",
+    "When we said medium chance (30-60%), it happened 4 in 10 times (629 forecasts)."
+   ]
+  },
+  {
+   "hazard": "onset",
+   "week": 4,
+   "state": "Uttar Pradesh",
+   "tier": "validated",
+   "n": 328,
+   "events": 172,
+   "base_rate": 0.524390243902439,
+   "brier": 0.22279560950223762,
+   "brier_ref": 0.22855871986474868,
+   "bss": 0.025215009805451438,
+   "auc": 0.6707848837209303,
+   "hit_rate": 1.0,
+   "false_alarm_ratio": 0.47560975609756095,
+   "warnings": 328,
+   "bins": [
+    {
+     "name": "low",
+     "label": "low chance (under 30%)",
+     "n": 0,
+     "observed": null,
+     "forecast": null
+    },
+    {
+     "name": "medium",
+     "label": "medium chance (30-60%)",
+     "n": 171,
+     "observed": 0.4269005847953216,
+     "forecast": 0.44753102409212214
+    },
+    {
+     "name": "high",
+     "label": "high chance (over 60%)",
+     "n": 157,
+     "observed": 0.6305732484076433,
+     "forecast": 0.6073581709223947
+    }
+   ],
+   "verdict": "better",
+   "sentences": [
+    "When we said medium chance (30-60%), it happened 4 in 10 times (171 forecasts).",
+    "When we said high chance (over 60%), it happened 6 in 10 times (157 forecasts)."
+   ]
+  }
+ ]
+}

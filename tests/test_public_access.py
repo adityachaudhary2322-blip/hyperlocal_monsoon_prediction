@@ -31,14 +31,17 @@ from src.common import ROOT
 PUBLIC_MODULES = [
     ROOT / "app" / "public_data.py",
     ROOT / "app" / "components" / "public_map.py",
+    ROOT / "app" / "unit_detail.py",
     *sorted((ROOT / "app" / "pages" / "public").glob("*.py")),
 ]
 ALLOWED_MODELS = {"Unit", "ForecastRun", "Forecast", "Advisory", "WeatherNow",
-                  "WeatherState", "WeatherFetch", "WeatherGrid"}
+                  "WeatherState", "WeatherFetch", "WeatherGrid", "LiveRun", "LiveUnit",
+                  "LiveForecast", "LiveOutlook", "LiveWeather", "LiveVerification"}
 ALLOWED_TABLES = {"units", "forecast_runs", "forecasts", "advisories", "weather_now",
-                  "weather_state", "weather_fetch", "weather_grid"}
+                  "weather_state", "weather_fetch", "weather_grid", "live_runs", "live_units",
+                  "live_forecasts", "live_outlook", "live_weather", "live_verification"}
 FORBIDDEN_TABLES = {"subscribers", "messages", "users", "audit_log", "alerts", "settings",
-                    "forecast_changes"}
+                    "forecast_changes", "obs_unit_rain"}
 
 APPROVED = "APPROVED-MARKER-7f3a"
 PENDING = "PENDING-MARKER-91c2"
@@ -89,8 +92,9 @@ def seeded_db(tmp_path, monkeypatch):
     import streamlit as st
 
     from src.db import session as session_module
-    from src.db.models import (Advisory, AuditLog, Forecast, ForecastRun, Subscriber,
-                               Unit, User, WeatherFetch, WeatherNow, WeatherState)
+    from src.db.models import (Advisory, AuditLog, Forecast, ForecastRun, LiveForecast,
+                               LiveOutlook, LiveRun, LiveUnit, LiveWeather, Subscriber, Unit,
+                               User, WeatherFetch, WeatherNow, WeatherState)
 
     db = tmp_path / "public.db"
     session_module.use_url(f"sqlite:///{db}")
@@ -124,6 +128,22 @@ def seeded_db(tmp_path, monkeypatch):
         s.add(WeatherState(state_key="maharashtra", state="Maharashtra", n_districts=1,
                            fetched_utc=now, temp_c=29.0, precip_24h_mm=3.0, precip_7d_mm=20.0))
         s.add(WeatherFetch(started_utc=now, ok=True, n_districts=1, n_expected=1))
+        live = LiveRun(run_date=dt.date(2024, 6, 20), run_type="live", season="monsoon",
+                       hazards="dry,heavy", sources='{"blend_basis": ["ec46_only"]}', n_units=3)
+        s.add(live)
+        s.flush()
+        for u, n, d in units:
+            s.add(LiveUnit(unit_id=u, unit_name=n, name_ok=True, district=d, state="Maharashtra",
+                           tier="validated", seasonal_low=False, lat=18.4, lon=76.6))
+            for hz in ("dry", "heavy"):
+                for h in (7, 14, 21, 28):
+                    s.add(LiveForecast(run_id=live.id, unit_id=u, hazard=hz, horizon=h,
+                                       p_ec46=700, p_blend=700, level="red"))
+            for w in (1, 2, 3, 4):
+                s.add(LiveOutlook(run_id=live.id, unit_id=u, week=w, p10=1, p50=5, p90=20,
+                                  normal=12, p_below=500, p_near=300, p_above=200))
+            s.add(LiveWeather(run_id=live.id, unit_id=u, rain_7d=10, rain_14d=30, normal_7d=12,
+                              normal_14d=25, temp_c=29, rh_pct=80, obs_source="imd"))
 
     statements: list[str] = []
     from sqlalchemy import event
@@ -151,10 +171,12 @@ def _tables(sql: str) -> set[str]:
     return {m.lower() for m in re.findall(r'(?:FROM|JOIN|INTO|UPDATE)\s+"?(\w+)"?', sql, re.I)}
 
 
-def _run_public(page: str | None):
+def _run_public(page: str | None, unit: str | None = None):
     from streamlit.testing.v1 import AppTest
 
     at = AppTest.from_file(str(ROOT / "app" / "main.py"), default_timeout=120)
+    if unit:
+        at.query_params["unit"] = unit
     at.run()
     if page:
         at.switch_page(page).run()
@@ -170,7 +192,9 @@ def _page_text(at) -> str:
     return "\n".join(parts)
 
 
-@pytest.mark.parametrize("page", [None, "pages/public/about.py"], ids=["home", "about"])
+@pytest.mark.parametrize("page", [None, "pages/public/about.py", "pages/public/outlook.py",
+                                  "pages/public/accuracy.py"],
+                         ids=["home", "about", "next30", "accuracy"])
 def test_public_pages_touch_only_allowed_tables(seeded_db, page):
     statements, _ = seeded_db
     statements.clear()
@@ -180,7 +204,7 @@ def test_public_pages_touch_only_allowed_tables(seeded_db, page):
     touched = set().union(*(_tables(s) for s in data_sql)) if data_sql else set()
     if page is None:
         # Not vacuous: Home really reads forecasts and advisories through this path.
-        assert {"forecasts", "advisories", "weather_state"} <= touched, touched
+        assert {"live_forecasts", "live_runs", "weather_state"} <= touched, touched
     assert touched <= ALLOWED_TABLES, f"public page read {touched - ALLOWED_TABLES}"
     assert not touched & FORBIDDEN_TABLES
     for sql in data_sql:
@@ -190,10 +214,14 @@ def test_public_pages_touch_only_allowed_tables(seeded_db, page):
 
 
 def test_home_shows_only_approved_advisory_text(seeded_db):
+    """Open the approved area, then the pending and rejected ones, via ?unit=."""
     _, captured = seeded_db
-    at = _run_public(None)
-    blob = _page_text(at) + json.dumps(captured.get("data", {}), ensure_ascii=False)
-    assert APPROVED in blob, "the approved advisory should reach the map"
+    blob = ""
+    for unit in ("IND.20.16.2_1", "IND.20.6.2_1", "IND.20.6.3_1"):
+        captured.clear()
+        at = _run_public(None, unit=unit)
+        blob += _page_text(at) + json.dumps(captured.get("data", {}), ensure_ascii=False)
+    assert APPROVED in blob, "the approved advisory should reach the map panel"
     for secret in (PENDING, REJECTED, PHONE, USER_NAME, AUDIT, f"officer {APPROVED}",
                    f"why {APPROVED}"):
         assert secret not in blob, f"{secret} leaked to the public page"
@@ -214,4 +242,14 @@ def test_signed_out_navigation_registers_only_public_pages(seeded_db, monkeypatc
 
     monkeypatch.setattr(st, "navigation", spy)
     _run_public(None)
-    assert set(registered) == {"", "about", "sign-in"}, registered
+    assert set(registered) == {"", "next-30-days", "accuracy", "about", "sign-in"}, registered
+
+
+def test_an_old_advisory_is_never_shown_as_current(seeded_db, monkeypatch):
+    """A back-test advisory (2024) must not appear beside a 2026 forecast."""
+    import datetime as _dt
+
+    from app import public_data as pdata
+
+    assert pdata.approved_advisories_by_unit(_dt.date(2024, 6, 25))          # current
+    assert pdata.approved_advisories_by_unit(_dt.date(2026, 9, 27)) == {}    # stale

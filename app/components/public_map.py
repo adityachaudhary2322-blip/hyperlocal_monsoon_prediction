@@ -32,7 +32,7 @@ def _component():
     )
 
 
-STATE_KEYS = ("hazard", "week", "weather")
+STATE_KEYS = ("hazard", "week", "weather", "unit")
 
 
 def _ignore() -> None:
@@ -49,6 +49,8 @@ def public_map(data: dict, key: str = "mo_map"):
     """Mount the map. `data` must carry the current hazard / week / weather."""
     return _component()(
         data=data, key=key,
-        default={k: data[k] for k in STATE_KEYS},
+        default={**{k: data[k] for k in ("hazard", "week", "weather")},
+                 "unit": data.get("selected") or ""},
         on_hazard_change=_ignore, on_week_change=_ignore, on_weather_change=_ignore,
+        on_unit_change=_ignore,
     )

@@ -39,12 +39,15 @@ from src.report import DataError, print_list, require_nonempty, summarize
 ROW_SUM_TOL = 1e-9
 
 
-def cell_frame(lat: np.ndarray, lon: np.ndarray) -> gpd.GeoDataFrame:
+def cell_frame(lat: np.ndarray, lon: np.ndarray,
+               cell_deg: float = IMD_CELL_DEG) -> gpd.GeoDataFrame:
     """One polygon per grid cell, with cell_id = lat_index * n_lon + lon_index.
 
     That ordering must match the C-order flatten of the (lat, lon) rainfall grid.
+    `cell_deg` defaults to the IMD grid; the live engine reuses this for its 0.5 and
+    1.5 degree forecast grids.
     """
-    half = IMD_CELL_DEG / 2
+    half = cell_deg / 2
     ids, polys = [], []
     for i, y in enumerate(lat):
         for j, x in enumerate(lon):
@@ -80,13 +83,13 @@ def valid_cell_mask(lat: np.ndarray, lon: np.ndarray) -> np.ndarray:
 
 
 def build(units: gpd.GeoDataFrame, lat: np.ndarray, lon: np.ndarray,
-          valid: np.ndarray):
+          valid: np.ndarray, cell_deg: float = IMD_CELL_DEG):
     """Build the weight matrix.
 
     Returns (W, cells_per_unit, small_unit, unit_area_valid, cell_coverage) where W
     rows sum to 1 and the two area vectors are raw intersection areas in m^2.
     """
-    cells = cell_frame(lat, lon)
+    cells = cell_frame(lat, lon, cell_deg)
     n_cells = lat.size * lon.size
 
     units_ea = units.to_crs(EQUAL_AREA_CRS)

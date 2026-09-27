@@ -1,0 +1,123 @@
+# Public UI strings, Marathi. Drafted by the developer; review by a native speaker pending.
+meta: {language: मराठी, review: pending}
+
+tab_map: नकाशा
+tab_30: पुढील 30 दिवस
+tab_accuracy: अचूकता
+tab_about: माहिती
+lang_label: भाषा
+coverage: "उत्तर प्रदेश, दिल्ली, बिहार, मध्य प्रदेश आणि महाराष्ट्रासाठी अंदाज तपासलेले आहेत. पीक सल्ला तपासेपर्यंत इतर राज्यांमध्ये ते प्रायोगिक आहेत."
+coverage_badge: 5 राज्ये तपासलेली
+dark_mode: डार्क मोड
+sign_in: साइन इन (अधिकारी)
+
+search_placeholder: तुमचा ब्लॉक किंवा जिल्हा शोधा
+use_location: माझे ठिकाण वापरा
+location_denied: "ठिकाण मिळाले नाही. नावाने शोधा."
+map_options: नकाशाचे पर्याय
+weather_layer: हवामान थर
+monsoon_risk: मान्सून धोका
+looking_ahead: पुढे किती काळ
+animations: ॲनिमेशन
+week_n: "{n} आठवडा"
+weeks_n: "{n} आठवडे"
+
+tier_validated: तपासलेले
+tier_experimental: प्रायोगिक
+tier_low: कमी विश्वास
+tier_help_validated: "या राज्यात मागील हंगामांवर तपासलेले."
+tier_help_experimental: "तीच पद्धत, या राज्यासाठी अजून तपासलेली नाही."
+tier_help_low: "इथे ही पद्धत कमकुवत आहे (डोंगराळ भाग किंवा ईशान्य मान्सून)."
+
+level_low: कमी
+level_medium: मध्यम
+level_high: जास्त
+level_none: अंदाज नाही
+
+hazard_onset: मान्सूनचे आगमन
+hazard_dry: कोरडा कालावधी
+hazard_heavy: मुसळधार पाऊस
+hazard_withdrawal: मान्सूनची माघार
+hazard_late_heavy: काढणीच्या वेळी मुसळधार पाऊस
+hazard_rabi_moisture: रब्बी पेरणीसाठी कमी ओलावा
+
+sentence_onset: "{span} मान्सून येण्याची {p} शक्यता"
+sentence_dry: "{span} 10 किंवा अधिक दिवसांचा कोरडा कालावधी सुरू होण्याची {p} शक्यता"
+sentence_heavy: "{span} एखाद्या दिवशी मुसळधार पावसाची (65 मिमी किंवा अधिक) {p} शक्यता"
+sentence_withdrawal: "{span} मान्सून परतण्याची {p} शक्यता"
+sentence_late_heavy: "{span} काढणीच्या वेळी मुसळधार पावसाची {p} शक्यता"
+sentence_rabi_moisture: "{span} पाऊस रब्बी पेरणीसाठी कमी राहण्याची {p} शक्यता"
+span_1: पुढील आठवड्यात
+span_n: "पुढील {n} आठवड्यांत"
+
+updated: "अद्यतन {time}"
+data_delayed: "डेटाला उशीर: काही माहिती 3 दिवसांपेक्षा जुनी आहे"
+weather_now: सध्याचे आणि अलीकडचे हवामान
+rain_last_7: "मागील 7 दिवसांतील पाऊस"
+rain_last_14: "मागील 14 दिवसांतील पाऊस"
+normal: सरासरी
+temperature_now: सध्याचे तापमान
+humidity_now: सध्याची आर्द्रता
+soil_moisture: वरच्या मातीतील ओलावा
+next_30: पुढील 30 दिवस
+week_card: "आठवडा {n}"
+chart_title: "दर आठवड्याचा पाऊस: संभाव्य मर्यादा, सर्वाधिक संभाव्य प्रमाण आणि सरासरी"
+chart_range: संभाव्य मर्यादा (10 पैकी 1 ते 10 पैकी 9)
+chart_median: सर्वाधिक संभाव्य
+chart_normal: सरासरी (1990-2018)
+chart_today: आज
+outlook_above: "आठवडा {n} सरासरीपेक्षा ओला दिसतो ({p} शक्यता)."
+outlook_below: "आठवडा {n} सरासरीपेक्षा कोरडा दिसतो ({p} शक्यता)."
+outlook_near: "आठवडा {n} सरासरीच्या जवळ दिसतो."
+outlook_month: "पुढील 4 आठवडे: {text}"
+crops_here: इथली पिके
+crops_source_district: "जिल्ह्याच्या आकडेवारीतील मुख्य पिके."
+crops_source_state: "या राज्यात घेतली जाणारी पिके (जिल्ह्याची आकडेवारी अजून जोडलेली नाही)."
+advisory: मंजूर सल्ला
+no_advisory: या भागासाठी सध्या मंजूर सल्ला नाही.
+machine_translated: यंत्राने अनुवादित
+source_line: "संमिश्र अंदाज: आमचे ML मॉडेल + ECMWF EC46 समूह, IMD आणि Open-Meteo च्या डेटावरून."
+ml_coming_soon: "आमचे राष्ट्रीय ML मॉडेल लवकरच येत आहे; आजच्या शक्यता EC46 समूहातून आहेत."
+share_whatsapp: WhatsApp वर पाठवा
+share_text: "{name}, {district} साठी मान्सून अंदाज: {url}"
+no_forecast_unit: "या भागासाठी अजून अंदाज उपलब्ध नाही."
+pick_area: "नकाशावर भाग निवडा किंवा तुमचा ब्लॉक किंवा जिल्हा शोधा."
+empty_no_run: "पहिला दैनिक अंदाज अजून चाललेला नाही. सकाळी 10 (IST) नंतर पहा."
+error_generic: "हे लोड करताना अडचण आली. पेज रिफ्रेश करा; तरीही झाले तर नंतर प्रयत्न करा."
+summary_heading: "{hazard}, {span}"
+summary_line: "{state}: {n} भाग जास्त धोक्यात"
+summary_none: "{state}: कोणताही भाग जास्त धोक्यात नाही"
+other_states: इतर राज्ये (प्रायोगिक)
+disclaimer: "प्रायोगिक नमुना. नेहमी IMD आणि राज्य कृषी विभागाचे अधिकृत सल्ले पाळा."
+unnamed_area: नाव नसलेला भाग
+loading: लोड होत आहे…
+forecast_area: "अंदाज क्षेत्र: {name}"
+close: बंद करा
+legend: खुणा
+hide: लपवा
+show: दाखवा
+no_match: काहीही सापडले नाही
+kind_district: जिल्हा
+kind_subdistrict: तालुका
+kind_block: ब्लॉक
+tier_legend: विश्वास
+district_max_note: जिल्ह्यात सर्वाधिक धोका असलेल्या तालुक्याचा रंग दिसतो.
+week_long: "आठवडा {n} (पुढील {days} दिवस)"
+rain_forecast_btn: पावसाचा अंदाज
+monsoon_advance_btn: मान्सूनची वाटचाल
+wind_flow: वाऱ्याचा प्रवाह
+wx_rain24: पाऊस 24 तास
+wx_rain7: पाऊस 7 दिवस
+wx_temp: तापमान
+wx_title_rain24: पुढील 24 तासांतील पाऊस (मिमी)
+wx_title_rain7: पुढील 7 दिवसांतील पाऊस (मिमी)
+wx_title_temp: सध्याचे तापमान (°C)
+band_high: जास्त · 60% पेक्षा अधिक
+band_medium: मध्यम · 30–60%
+band_low: कमी · 30% पेक्षा कमी
+band_none: अजून अंदाज नाही
+tier_solid: तपासलेले (गडद)
+tier_light: प्रायोगिक (फिकट)
+tier_hatched: कमी विश्वास (रेषांकित)
+boundaries_note: सीमा सूचक आहेत, अधिकृत नाहीत
+next_label: "{span}"

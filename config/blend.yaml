@@ -1,0 +1,12 @@
+# Hybrid blend: p = w * p_ML + (1 - w) * p_EC46, per hazard x horizon (days).
+#
+# Default w = 0.5 everywhere. These weights will be tuned from live verification (Stage
+# 6 writes SUGGESTIONS; nothing here is changed automatically).
+#
+# While the national ML models are "coming soon" (Stage 2 deferred), p_ML is missing for
+# every unit and the engine uses EC46 alone - it records blend_basis = "ec46_only" per
+# run, and the site says so. It never pretends a blend happened.
+default: 0.5
+weights: {}
+#  example:
+#  heavy: {7: 0.4, 14: 0.4, 21: 0.5, 28: 0.5}

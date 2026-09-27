@@ -1,0 +1,59 @@
+# Confidence tier per unit (shown everywhere a forecast is shown).
+#
+#   validated     - the 5 states the models were developed and tested on
+#   experimental  - every other state: same method, not yet verified locally
+#   low           - where the method is known to be weak: the Northeast hill states,
+#                   Himalayan high-altitude units, and Tamil Nadu / coastal Andhra during
+#                   the Oct-Dec northeast monsoon (a different rain regime from the
+#                   southwest monsoon the models learned).
+#
+# State and district strings are exactly as they appear in gadm41_IND_3.shp (NAME_1 /
+# NAME_2), printed from the file on 2026-09-27. GADM 4.1 has no separate Ladakh: it is
+# inside "Jammu and Kashmir", so high altitude is decided by elevation, not by state.
+
+validated:
+  - Uttar Pradesh
+  - NCT of Delhi
+  - Bihar
+  - Madhya Pradesh
+  - Maharashtra
+
+low:
+  # Northeast hill states: orographic rain the 0.25 deg grid resolves poorly.
+  states:
+    - Arunachal Pradesh
+    - Manipur
+    - Meghalaya
+    - Mizoram
+    - Nagaland
+    - Sikkim
+    - Tripura
+  # Himalayan high altitude: unit centroid elevation (Open-Meteo elevation API,
+  # Copernicus 90 m DEM) at or above this height, in these states.
+  high_altitude:
+    min_elevation_m: 2000
+    states:
+      - Jammu and Kashmir
+      - Himachal Pradesh
+      - Uttarakhand
+      - Sikkim
+      - Arunachal Pradesh
+
+# Seasonal: low confidence only for forecasts issued in these months.
+seasonal_low:
+  months: [10, 11, 12]
+  reason: northeast monsoon season
+  states:
+    - Tamil Nadu
+    - Puducherry
+  districts:
+    Andhra Pradesh:          # the coastal districts of GADM's 13 (pre-2022) districts
+      - Srikakulam
+      - Vizianagaram
+      - Visakhapatnam
+      - East Godavari
+      - West Godavari
+      - Krishna
+      - Guntur
+      - Prakasam
+      - Nellore

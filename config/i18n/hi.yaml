@@ -1,0 +1,123 @@
+# Public UI strings, Hindi. Drafted by the developer; review by a native speaker pending.
+meta: {language: हिन्दी, review: pending}
+
+tab_map: नक्शा
+tab_30: अगले 30 दिन
+tab_accuracy: सटीकता
+tab_about: परिचय
+lang_label: भाषा
+coverage: "उत्तर प्रदेश, दिल्ली, बिहार, मध्य प्रदेश और महाराष्ट्र के लिए पूर्वानुमान जाँचे हुए हैं। बाकी राज्यों में ये प्रायोगिक हैं, जब तक हम फसल सलाह की जाँच कर रहे हैं।"
+coverage_badge: 5 राज्य जाँचे हुए
+dark_mode: डार्क मोड
+sign_in: साइन इन (अधिकारी)
+
+search_placeholder: अपना ब्लॉक या ज़िला खोजें
+use_location: मेरी जगह इस्तेमाल करें
+location_denied: "जगह नहीं मिली। नाम से खोजें।"
+map_options: नक्शे के विकल्प
+weather_layer: मौसम परत
+monsoon_risk: मानसून जोखिम
+looking_ahead: आगे कितने समय का
+animations: एनिमेशन
+week_n: "{n} सप्ताह"
+weeks_n: "{n} सप्ताह"
+
+tier_validated: जाँचा हुआ
+tier_experimental: प्रायोगिक
+tier_low: कम भरोसा
+tier_help_validated: "इस राज्य में पिछले मौसमों पर जाँचा गया।"
+tier_help_experimental: "वही तरीका, इस राज्य के लिए अभी जाँचा नहीं गया।"
+tier_help_low: "यहाँ यह तरीका कमज़ोर है (पहाड़ या उत्तर-पूर्वी मानसून)।"
+
+level_low: कम
+level_medium: मध्यम
+level_high: अधिक
+level_none: पूर्वानुमान नहीं
+
+hazard_onset: मानसून का आगमन
+hazard_dry: सूखा दौर
+hazard_heavy: भारी बारिश
+hazard_withdrawal: मानसून की वापसी
+hazard_late_heavy: कटाई के समय भारी बारिश
+hazard_rabi_moisture: रबी बुवाई के लिए कम नमी
+
+sentence_onset: "{span} में मानसून आने की {p} संभावना"
+sentence_dry: "{span} में 10 या अधिक दिनों का सूखा दौर शुरू होने की {p} संभावना"
+sentence_heavy: "{span} में किसी दिन भारी बारिश (65 मिमी या अधिक) की {p} संभावना"
+sentence_withdrawal: "{span} में मानसून लौटने की {p} संभावना"
+sentence_late_heavy: "{span} में कटाई के समय भारी बारिश की {p} संभावना"
+sentence_rabi_moisture: "{span} तक बारिश रबी बुवाई के लिए कम रहने की {p} संभावना"
+span_1: अगले सप्ताह
+span_n: "अगले {n} सप्ताह"
+
+updated: "अपडेट {time}"
+data_delayed: "डेटा में देरी: कुछ जानकारी 3 दिन से पुरानी है"
+weather_now: अभी और हाल का मौसम
+rain_last_7: "पिछले 7 दिनों में बारिश"
+rain_last_14: "पिछले 14 दिनों में बारिश"
+normal: सामान्य
+temperature_now: अभी तापमान
+humidity_now: अभी नमी
+soil_moisture: ऊपरी मिट्टी की नमी
+next_30: अगले 30 दिन
+week_card: "सप्ताह {n}"
+chart_title: "हर सप्ताह बारिश: संभावित दायरा, सबसे संभावित मात्रा और सामान्य"
+chart_range: संभावित दायरा (10 में 1 से 10 में 9)
+chart_median: सबसे संभावित
+chart_normal: सामान्य (1990-2018)
+chart_today: आज
+outlook_above: "सप्ताह {n} सामान्य से गीला दिखता है ({p} संभावना)।"
+outlook_below: "सप्ताह {n} सामान्य से सूखा दिखता है ({p} संभावना)।"
+outlook_near: "सप्ताह {n} सामान्य के आसपास दिखता है।"
+outlook_month: "अगले 4 सप्ताह: {text}"
+crops_here: यहाँ की फसलें
+crops_source_district: "ज़िले के आँकड़ों से मुख्य फसलें।"
+crops_source_state: "इस राज्य में उगाई जाने वाली फसलें (ज़िले के आँकड़े अभी नहीं जोड़े गए)।"
+advisory: स्वीकृत सलाह
+no_advisory: इस क्षेत्र के लिए अभी कोई स्वीकृत सलाह नहीं है।
+machine_translated: मशीन से अनुवादित
+source_line: "मिश्रित पूर्वानुमान: हमारा ML मॉडल + ECMWF EC46 समूह, IMD और Open-Meteo के डेटा से।"
+ml_coming_soon: "हमारा राष्ट्रीय ML मॉडल जल्द आ रहा है; आज की संभावनाएँ EC46 समूह से हैं।"
+share_whatsapp: WhatsApp पर भेजें
+share_text: "{name}, {district} का मानसून पूर्वानुमान: {url}"
+no_forecast_unit: "इस क्षेत्र के लिए अभी पूर्वानुमान उपलब्ध नहीं है।"
+pick_area: "नक्शे पर क्षेत्र चुनें या अपना ब्लॉक या ज़िला खोजें।"
+empty_no_run: "पहला दैनिक पूर्वानुमान अभी नहीं चला है। सुबह 10 बजे (IST) के बाद देखें।"
+error_generic: "इसे लोड करने में समस्या हुई। पेज रीफ़्रेश करें; फिर भी हो तो बाद में कोशिश करें।"
+summary_heading: "{hazard}, {span}"
+summary_line: "{state}: {n} क्षेत्र अधिक जोखिम में"
+summary_none: "{state}: कोई क्षेत्र अधिक जोखिम में नहीं"
+other_states: अन्य राज्य (प्रायोगिक)
+disclaimer: "प्रायोगिक प्रोटोटाइप। हमेशा IMD और राज्य कृषि विभाग की आधिकारिक सलाह मानें।"
+unnamed_area: बिना नाम का क्षेत्र
+loading: लोड हो रहा है…
+forecast_area: "पूर्वानुमान क्षेत्र: {name}"
+close: बंद करें
+legend: संकेत
+hide: छिपाएँ
+show: दिखाएँ
+no_match: कुछ नहीं मिला
+kind_district: ज़िला
+kind_subdistrict: तहसील
+kind_block: ब्लॉक
+tier_legend: भरोसा
+district_max_note: ज़िले में सबसे अधिक जोखिम वाली तहसील का रंग दिखता है।
+week_long: "सप्ताह {n} (अगले {days} दिन)"
+rain_forecast_btn: बारिश पूर्वानुमान
+monsoon_advance_btn: मानसून का बढ़ना
+wind_flow: हवा का बहाव
+wx_rain24: बारिश 24 घंटे
+wx_rain7: बारिश 7 दिन
+wx_temp: तापमान
+wx_title_rain24: अगले 24 घंटों में बारिश (मिमी)
+wx_title_rain7: अगले 7 दिनों में बारिश (मिमी)
+wx_title_temp: अभी तापमान (°C)
+band_high: अधिक · 60% से ऊपर
+band_medium: मध्यम · 30–60%
+band_low: कम · 30% से नीचे
+band_none: अभी पूर्वानुमान नहीं
+tier_solid: जाँचा हुआ (गहरा)
+tier_light: प्रायोगिक (हल्का)
+tier_hatched: कम भरोसा (धारीदार)
+boundaries_note: सीमाएँ सांकेतिक हैं, आधिकारिक नहीं
+next_label: "{span}"

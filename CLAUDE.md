@@ -22,8 +22,10 @@ Deliverables:
 
 Windows, Ryzen 7 7435HS, **RTX 4050 6 GB VRAM**, **16 GB RAM**.
 
-- **Never load all-India data.** Clip to the project bounding box *first*, on read:
-  `BBOX = lat 15.5–31, lon 72.5–88.5`.
+- **Never load all-India data at once.** The 5-state pipeline clips to the project
+  bounding box *first*, on read: `BBOX = lat 15.5–31, lon 72.5–88.5`. The national
+  pipeline (`src.build_national_rain`, since 2026-09-27) reads the full IMD grid **one
+  year at a time** - grid[days, 17,415] @ W.T per year, never all years in memory.
 - Process **year-by-year** or **state-by-state**. Never hold the full time series
   for all units in memory at once if it can be streamed.
 - Store all numeric data as **float32** (never float64) in processed outputs.
@@ -497,3 +499,42 @@ never "blocks" (§5).
 credits the Smart India Hackathon / Ministry of Earth Sciences problem statement as text.
 `app/static/partners/moes-logo.png` is shown only if placed by hand - never draw or
 download a government emblem.
+
+## 19. National hybrid live system (2026-09-27)
+
+**Stage 2 (national ML retrain) is deferred - "coming soon".** Until it lands the live
+engine blends nothing: `p_blend = p_ec46`, every run records `blend_basis: ec46_only`,
+and the site says so. Replay of past dates also waits for it (no free EC46 archive).
+
+- **National data**: `src.build_units --national` (2,347 GADM units, tiers from
+  `config/tiers.yaml`: 739 validated / 1,457 experimental / 151 low, +256 low in Oct-Dec),
+  `src.build_national_rain` (1990-2026, one year at a time, conservation 4e-9),
+  `src.build_crop_calendar` (DES Appendix IV: sowing/harvest sourced, middle stages
+  derived and labelled). District crop areas and agro-climatic region boundaries are
+  data.gov.in downloads behind a captcha - not yet provided; crops fall back to
+  "state default (DES crop calendar)", zones to NARP-where-sourced + defaults.
+  The two CSVs found in Downloads on 2026-09-27 (`crop_production_up_...csv`,
+  `imd_agrimet_..._30years.csv`) were NOT used: they look synthetic (fall armyworm in
+  1994; smooth monotone areas; 24 districts).
+- **Live engine** `src/live/` + `.github/workflows/live.yml` (daily 04:30 UTC, then
+  `src.live.verify`). EC46 51 members at 188 points (1.5 deg) + ensemble mean, 0.5 deg
+  short range at 1,314 points, IMD real-time observed (Open-Meteo bias-adjusted fallback).
+  ~5,740 Open-Meteo calls/run; the client paces itself under 550/min and **4,500/hour**
+  (the free tier's hourly 5,000 is the binding limit, so a run takes ~75 min). The
+  3-hourly `weather.yml` is retired; the national weather layer comes from the daily run.
+- **Events** are defined once in `src/labels.py` / `config/labels.yaml` for EC46 members,
+  verification and (later) training. Onset stops being forecast after 15 Aug
+  (`config/season.yaml hazard_until`): a strict-rule "no confirmed onset" otherwise reads as
+  "the monsoon has not arrived" in September.
+- **Storage** (Neon 0.5 GB): per-mille ints; full detail for 7 days + Mondays; observed
+  rain for the current season; DB size printed each run, warning above 400 MB.
+- **Crop impact** `src/crop_impact.py` + `config/crop_vulnerability.yaml` (+ `_i18n`):
+  disease RISK names only, never pesticides/doses (tested); `review: pending`.
+- **Public UI**: tabs Map | Next 30 days | Accuracy | About; EN/हिं/मरा (`config/i18n/`,
+  Hindi/Marathi drafted, review pending); SoI sub-districts (CC0) for all states coloured
+  from the GADM unit covering most of each; LGD blocks in search; Devanagari search is
+  transliterated to Latin; `?unit=` deep links; panel built server-side
+  (`app/unit_detail.py`). Approved advisories older than 14 days are never shown.
+- **Accuracy**: `src/accuracy.py` - no overall %, BSS/AUC/hit/FAR/reliability per hazard
+  x week; live scorecard needs 30 verified forecasts; blend-weight suggestions go to the
+  `settings` table, never applied automatically.

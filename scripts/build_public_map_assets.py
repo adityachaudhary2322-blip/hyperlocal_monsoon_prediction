@@ -40,7 +40,9 @@ import geopandas as gpd  # noqa: E402
 import pandas as pd  # noqa: E402
 from rapidfuzz import fuzz, process  # noqa: E402
 
-from src.common import (DATA_RAW, EQUAL_AREA_CRS, GEO_CRS, UNITS_GPKG,  # noqa: E402
+import numpy as np  # noqa: E402
+
+from src.common import (DATA_RAW, EQUAL_AREA_CRS, GEO_CRS, UNITS_INDIA_GPKG,  # noqa: E402
                         regions)
 from src.report import DataError, summarize  # noqa: E402
 
@@ -313,52 +315,112 @@ def main() -> int:
                     "size_mb": centroids_path.stat().st_size / 1e6})
 
     search: list[dict] = []
-    covered_keys = {slug(n) for n in covered}
-    district_bounds = districts.to_crs(GEO_CRS)
-    for row in district_bounds.itertuples():
-        if slug(row.state) in covered_keys:
-            continue            # covered states are indexed from the GADM units below
-        search.append({"n": row.district, "s": row.state, "k": "district",
-                       "b": bbox(row.geometry)})
 
-    # ---- covered states: GADM districts + sub-districts -----------------------
-    if not UNITS_GPKG.is_file():
-        raise DataError(f"missing {UNITS_GPKG}; run python -m src.build_units")
-    units_all = gpd.read_file(UNITS_GPKG, layer="units").to_crs(GEO_CRS)
+    # ---- every state: SoI districts + SoI sub-districts (CC0), coloured by GADM ----
+    # The public map draws Survey of India sub-districts; the forecasts are made on
+    # GADM level-3 units (unit ids, weights). Each SoI sub-district takes the GADM unit
+    # that covers most of its area, so colours come from real forecasts while the
+    # polygons shown are openly licensed.
+    if not UNITS_INDIA_GPKG.is_file():
+        raise DataError("missing units_india.gpkg; run python -m src.build_units --national")
+    gadm = gpd.read_file(UNITS_INDIA_GPKG, layer="units")[["unit_id", "geometry"]]
+    gadm = gadm.to_crs(EQUAL_AREA_CRS)
+    gadm["geometry"] = gadm.geometry.make_valid()
+    subs_path = MIRROR_DIR / "SOI_Subdistricts.parquet"
+    if not subs_path.is_file():
+        raise DataError(f"missing {subs_path}; download admin/subdistricts from india-geodata")
+    subs = _read(subs_path)
+    subs["geometry"] = subs.geometry.make_valid().map(polygonal)   # some rings self-touch
+    subs = subs.assign(name=subs["TEHSIL_C"].map(title), district=subs["District_C"].map(title),
+                       state=subs["STATE_C"].map(title))
+    subs = subs[~subs["state"].str.contains("disputed", case=False)].reset_index(drop=True)
+    # The sub-district layer spells some states differently from the state layer
+    # ("Chhatisgarh"); map each to the state layer's name, and print every change.
+    canonical = [n for n in distinct if not n.lower().startswith("disputed")]
+    fix = {}
+    squash = {re.sub(r"[^a-z]", "", n.lower()): n for n in canonical}
+    for raw in sorted(subs["state"].unique()):
+        exact = squash.get(re.sub(r"[^a-z]", "", raw.lower()))
+        hit = (exact, 100.0, None) if exact else             process.extractOne(raw, canonical, scorer=fuzz.WRatio)
+        if not hit or hit[1] < MATCH_FLOOR:
+            raise DataError(f"sub-district state {raw!r} matches no state (best {hit})")
+        fix[raw] = hit[0]
+        if hit[0] != raw:
+            print(f"    sub-district state {raw!r} -> {hit[0]!r} ({hit[1]:.0f})")
+    subs["state"] = subs["state"].map(fix)
+    subs["sid"] = np.arange(len(subs))
+    subs["state_key"] = subs["state"].map(slug)
+    subs["did"] = subs["state_key"] + ":" + subs["district"]
+    ea = subs[["sid", "geometry"]].to_crs(EQUAL_AREA_CRS)
+    ea["geometry"] = ea.geometry.make_valid()
+    ea["area"] = ea.area
+    inter = gpd.overlay(ea, gadm, how="intersection", keep_geom_type=True)
+    inter["share"] = inter.area / inter["area"]
+    best = inter.sort_values("share", ascending=False).drop_duplicates("sid").set_index("sid")
+    subs["unit_id"] = subs["sid"].map(best["unit_id"])
+    subs["unit_share"] = subs["sid"].map(best["share"]).round(2)
+    print(f"  SoI sub-districts: {len(subs):,}; matched to a GADM unit: "
+          f"{subs['unit_id'].notna().sum():,}; median share of the match: "
+          f"{subs['unit_share'].median():.2f}")
+
+    # Districts are the dissolve of the sub-districts, so the two layers always agree on
+    # names and edges (the separate SoI district layer spells some districts differently).
+    soi_d = subs[["state", "state_key", "district", "did", "geometry"]].dissolve(
+        by=["state_key", "did"], as_index=False, aggfunc="first")
     per_state: dict[str, dict] = {}
-    state_key_for = {region: slug(name) for name, region in covered.items()}
-    for region in regions():
-        key = state_key_for[region]
-        units = units_all[units_all["state"] == region].copy()
-        if units.empty:
-            raise DataError(f"units.gpkg has no units for {region!r}")
-        placeholder = units.get("name_is_placeholder",
-                                pd.Series(False, index=units.index))
-        units["name_ok"] = ~placeholder.fillna(False).astype(bool)
-        # `did` joins a unit to its district for the district-level colour.
-        units["did"] = key + ":" + units["district"]
-        units["state_key"] = key
-        units = units[["unit_id", "unit_name", "district", "did", "state",
-                       "state_key", "name_ok", "geometry"]]
-        units_s = clean(units, TOL_UNITS_M, f"{region} units")
-        districts_s = clean(
-            units.dissolve(by="district", as_index=False)[["district", "did", "state",
-                                                           "state_key", "geometry"]],
-            TOL_DISTRICTS_M, f"{region} districts")
-        written.append(write_geojson(units_s, STATIC / f"units_{key}.geojson",
-                                     SIZE_LIMIT_MB))
-        written.append(write_geojson(districts_s, STATIC / f"districts_{key}.geojson",
-                                     SIZE_LIMIT_MB))
-        per_state[region] = {"key": key, "units": len(units_s),
-                             "districts": len(districts_s)}
-        for row in districts_s.itertuples():
-            search.append({"n": row.district, "s": region, "k": "district",
+    for key, group in subs.groupby("state_key"):
+        units_s = clean(group[["unit_id", "name", "district", "did", "state_key", "geometry"]],
+                        TOL_UNITS_M, f"{key} sub-districts")
+        dist_s = clean(soi_d[soi_d["state_key"] == key][["district", "did", "state_key", "geometry"]],
+                       TOL_DISTRICTS_M, f"{key} districts")
+        written.append(write_geojson(units_s, STATIC / f"units_{key}.geojson", SIZE_LIMIT_MB))
+        written.append(write_geojson(dist_s, STATIC / f"districts_{key}.geojson", SIZE_LIMIT_MB))
+        state_name = group["state"].iloc[0]
+        per_state[key] = {"state": state_name, "units": len(units_s), "districts": len(dist_s)}
+        for row in dist_s.itertuples():
+            search.append({"n": row.district, "s": state_name, "k": "district",
                            "b": bbox(row.geometry), "st": key})
         for row in units_s.itertuples():
-            if row.name_ok:
-                search.append({"n": row.unit_name, "d": row.district, "s": region,
-                               "k": "subdistrict", "b": bbox(row.geometry),
-                               "st": key, "id": row.unit_id})
+            b = bbox(row.geometry)
+            entry = {"n": row.name, "d": row.district, "s": state_name, "k": "subdistrict",
+                     "b": b, "st": key, "c": [round((b[0] + b[2]) / 2, 3), round((b[1] + b[3]) / 2, 3)]}
+            if isinstance(row.unit_id, str):
+                entry["id"] = row.unit_id
+            search.append(entry)
+
+    # ---- LGD blocks for "Find your block": names and extents only ------------------
+    blocks_path = MIRROR_DIR / "LGD_Blocks.parquet"
+    if blocks_path.is_file():
+        blocks = _read(blocks_path)
+        names = {n: slug(n) for n in subs["state"].unique()}      # corrected names
+
+        def squash_name(text: str) -> str:
+            return re.sub(r"[^a-z]", "", text.lower().replace("&", "and"))
+        by_squash = {squash_name(n): k for n, k in names.items()}
+        # LGD writes the merged UT without the joining "and"s.
+        by_squash["dadranagarhavelidamananddiu"] = slug("Dadra & Nagar Haveli & Daman & Diu")
+        state_map = {}
+        for raw in blocks["state"].astype(str).unique():
+            key = by_squash.get(squash_name(raw))
+            if key is None:
+                hit = process.extractOne(title(raw).replace("&", "and"), list(names),
+                                         scorer=fuzz.WRatio)
+                key = names[hit[0]] if hit and hit[1] >= MATCH_FLOOR else None
+            state_map[raw] = key
+        unmatched = sorted(k for k, v in state_map.items() if v is None)
+        n_blocks = 0
+        for row in blocks.itertuples():
+            key = state_map.get(str(row.state))
+            if not key or row.geometry is None or row.geometry.is_empty:
+                continue
+            b = bbox(row.geometry)
+            search.append({"n": title(row.block_name), "d": title(str(row.district)).replace(" District", ""),
+                           "s": per_state.get(key, {}).get("state", title(row.state)),
+                           "k": "block", "b": b, "st": key,
+                           "c": [round((b[0] + b[2]) / 2, 3), round((b[1] + b[3]) / 2, 3)]})
+            n_blocks += 1
+        print(f"  LGD blocks indexed: {n_blocks:,}" +
+              (f"; state names not matched: {unmatched}" if unmatched else ""))
 
     search_path = STATIC / "search_index.json"
     search_path.write_text(json.dumps(search, ensure_ascii=False,
@@ -366,11 +428,16 @@ def main() -> int:
     written.append({"path": search_path, "rows": len(search),
                     "size_mb": search_path.stat().st_size / 1e6})
 
+    validated = {region: {"key": slug(name), **per_state.get(slug(name), {})}
+                 for name, region in covered.items()}
     meta = {
         **provenance,
         "built_utc": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
-        "covered": {region: per_state[region] for region in regions()},
-        "subdistrict_source": "GADM 4.1 level 3 (not blocks; see CLAUDE.md §5)",
+        "covered": validated,
+        "states": per_state,
+        "subdistrict_source": "Survey of India sub-districts (india-geodata mirror, CC0); "
+                              "forecast values from the GADM 4.1 level-3 unit covering most "
+                              "of each",
         "tolerances_m": {"states": TOL_STATES_M, "districts": TOL_DISTRICTS_M,
                          "units": TOL_UNITS_M},
     }
@@ -380,10 +447,10 @@ def main() -> int:
     written.append({"path": meta_path, "rows": 1,
                     "size_mb": meta_path.stat().st_size / 1e6})
 
-    print("  units per covered state (GADM L3 - uneven, see CLAUDE.md §5):")
-    for region, info in per_state.items():
-        print(f"    {region:<16} {info['districts']:>3} districts  "
-              f"{info['units']:>3} sub-districts  -> *_{info['key']}.geojson")
+    print("  districts / sub-districts per state (Survey of India layers):")
+    for key, info in sorted(per_state.items(), key=lambda kv: -kv[1]["units"]):
+        print(f"    {info['state']:<30} {info['districts']:>3} districts  "
+              f"{info['units']:>4} sub-districts")
     for w in written:
         print(f"  {w['path'].relative_to(ROOT).as_posix():<48} "
               f"{w['rows']:>5} rows  {w['size_mb']:.2f} MB")

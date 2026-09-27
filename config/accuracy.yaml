@@ -1,0 +1,18 @@
+# How forecasts are scored for the public Accuracy tab and the terminal report.
+
+# A forecast counts as a WARNING when its probability reaches this (the medium band).
+#   hit rate          = warned events / all events          ("we warned of it")
+#   false-alarm ratio = warned non-events / all warnings    ("we warned, it did not come")
+warning_threshold: 0.30
+
+# Reliability bins match the map colours, so sentences read "when we said high chance".
+bins:
+  - {name: low, label: "low chance (under 30%)", lo: 0.0, hi: 0.30}
+  - {name: medium, label: "medium chance (30-60%)", lo: 0.30, hi: 0.60}
+  - {name: high, label: "high chance (over 60%)", lo: 0.60, hi: 1.01}
+
+# Skill vs the historical average (Brier skill score) shown in words:
+same_band: 0.01          # |BSS| below this is "about the same"
+
+# Live scorecard: below this many verified forecasts, show "not enough results yet".
+min_verified: 30

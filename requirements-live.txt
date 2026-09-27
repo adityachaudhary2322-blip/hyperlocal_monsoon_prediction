@@ -1,0 +1,17 @@
+# The daily live national run (.github/workflows/live.yml) - nothing else.
+#
+# `python -m src.live.run` imports only these. No streamlit, geopandas, lightgbm or
+# xarray: grids and weights arrive precomputed in app/assets/live/, and IMD real-time
+# files are read with the project's own byte-exact reader, not imdlib.
+#
+# Every pin must equal the one in requirements.txt / requirements-dev.txt;
+# tests/test_deployment.py fails if they drift.
+
+numpy==2.4.6
+scipy==1.17.1
+pandas==2.3.3
+requests==2.34.2
+SQLAlchemy==2.1.1
+psycopg2-binary==2.9.10
+PyYAML==6.0.3
+python-dotenv==1.2.3

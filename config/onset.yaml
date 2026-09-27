@@ -43,3 +43,42 @@ zones: {}
 
 # Per-state overrides, applied only when no zone override matches.
 states: {}
+
+# Per agro-climatic REGION defaults (the Planning Commission's 15 regions; names exactly
+# as in the Ministry of Jal Shakti "Boundaries of Agro-climatic regions" layer, 2022).
+# Resolution order: zones -> regions -> states -> defaults (src/onset.py).
+#
+# FIRST-PASS values, not calibrated. Stage 2 scores onset per region against the IMD
+# normal onset dates and these get tuned against that evidence, like `zones:` above.
+# The reasoning for each departure from `defaults`:
+regions:
+  # Arid west (W Rajasthan, Kutch): normal onset early-mid July, and 20 mm in 3 days is
+  # rare even after onset, so the default fires late or never. A lower trigger, and a
+  # longer dry spell before a start is rejected (breaks are longer in arid regimes).
+  Western Dry Region:
+    accum_mm: 12.0
+    dry_spell_days: 10
+    search_start: "06-01"
+  # Kerala / Konkan / Karnataka coast: onset late May - early June, with heavy
+  # pre-monsoon thundershowers. A higher trigger avoids declaring onset on those.
+  Western Coastal Plains and Ghats:
+    accum_mm: 40.0
+    search_start: "05-10"
+  # Peninsula interior: onset early-mid June, and the monsoon is weaker than in the
+  # core zone, so a 7-day break is common after a real onset. Allow a longer one.
+  Southern Plateau and Hills:
+    dry_spell_days: 10
+  # East coast / Tamil Nadu: the SW monsoon brings little rain here; most rain falls in
+  # the Oct-Dec NE monsoon (tier "low" in Oct-Dec). Keep the SW-monsoon rule but let
+  # breaks be long, so a real onset is not rejected.
+  Eastern Coastal Plains and Hills:
+    dry_spell_days: 12
+  # Northeast: onset early June after a very wet pre-monsoon (Mar-May). Higher trigger.
+  Eastern Himalayan Region:
+    accum_mm: 35.0
+  # Western Himalaya: onset late June - early July; orographic showers before it.
+  Western Himalayan Region:
+    search_start: "06-10"
+  # Islands: onset mid-late May.
+  Island Region:
+    search_start: "05-01"

@@ -1,0 +1,47 @@
+# Local monsoon WITHDRAWAL criteria. src/ reads this; nothing is hardcoded.
+#
+# Basis: IMD declares withdrawal over an area after (a) cessation of rainfall activity
+# over the area for 5 consecutive days, together with (b) an anticyclone at 850 hPa and
+# (c) a marked fall in moisture (IMD, revised criteria for monsoon onset/withdrawal,
+# 2020). Only (a) is observable from unit rainfall, so the rule here is a rainfall-only
+# approximation of IMD's, applied per unit:
+#
+#   withdrawal is the first day W in the search window, AFTER the unit's onset, where
+#     1. every day W .. W+dry_days-1 is below dry_day_mm, and
+#     2. the confirm_window_days after that run hold less than confirm_max_mm in total
+#        (rules out a mid-September break that the monsoon then recovers from).
+#
+# A unit whose monsoon has not withdrawn when the record ends is NOT given a date, the
+# same principle as onset's false-start filter (CLAUDE.md §9).
+#
+# FIRST-PASS values, not calibrated; Stage 2 scores them against IMD's normal withdrawal
+# isochrones (NW India from ~17 Sep, most of India by mid-October).
+
+defaults:
+  dry_days: 5
+  dry_day_mm: 1.0
+  confirm_window_days: 15
+  confirm_max_mm: 20.0
+  search_start: "09-01"
+  search_end: "11-30"
+
+# Same region names and resolution order as config/onset.yaml.
+regions:
+  # Withdrawal starts from W Rajasthan in mid-September.
+  Western Dry Region:
+    search_start: "08-25"
+    confirm_max_mm: 10.0
+  # The monsoon withdraws last from the south and the east coast (mid-October onward);
+  # NE-monsoon showers follow, so the confirming window tolerates some rain.
+  Southern Plateau and Hills:
+    search_start: "09-20"
+    confirm_max_mm: 40.0
+  Eastern Coastal Plains and Hills:
+    search_start: "10-01"
+    confirm_max_mm: 60.0
+  Western Coastal Plains and Ghats:
+    search_start: "09-20"
+    confirm_max_mm: 40.0
+  Island Region:
+    search_start: "10-01"
+    confirm_max_mm: 60.0

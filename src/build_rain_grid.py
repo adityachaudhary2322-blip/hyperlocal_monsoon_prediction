@@ -65,12 +65,12 @@ def _read_grd(path: str, n_days: int) -> np.ndarray:
     return data
 
 
-def _to_dataset(data: np.ndarray, times: pd.DatetimeIndex) -> xr.Dataset:
+def _to_dataset(data: np.ndarray, times: pd.DatetimeIndex, clip: bool = True) -> xr.Dataset:
     ds = xr.Dataset(
         {VAR: (("time", "lat", "lon"), data)},
         coords={"time": times, "lat": IMD_LAT, "lon": IMD_LON},
     )
-    return _slice_bbox(ds)
+    return _slice_bbox(ds) if clip else ds
 
 
 def load_archive_year(year: int) -> xr.Dataset | None:
@@ -89,8 +89,11 @@ def load_archive_year(year: int) -> xr.Dataset | None:
     return _to_dataset(data, times)
 
 
-def load_realtime_days(year: int) -> tuple[xr.Dataset | None, list[dt.date]]:
-    """Read whatever realtime days exist for `year`, skipping absent ones."""
+def load_realtime_days(year: int, clip: bool = True) -> tuple[xr.Dataset | None, list[dt.date]]:
+    """Read whatever realtime days exist for `year`, skipping absent ones.
+
+    `clip=False` keeps the full all-India grid (src.build_national_rain).
+    """
     day = dt.date(year, 1, 1)
     today = dt.date.today()
     chunks: list[np.ndarray] = []
@@ -107,7 +110,7 @@ def load_realtime_days(year: int) -> tuple[xr.Dataset | None, list[dt.date]]:
     if not chunks:
         return None, missing
     times = pd.DatetimeIndex([pd.Timestamp(d) for d in days])
-    return _to_dataset(np.concatenate(chunks, axis=0), times), missing
+    return _to_dataset(np.concatenate(chunks, axis=0), times, clip), missing
 
 
 def check_time_axis(ds: xr.Dataset) -> list[str]:

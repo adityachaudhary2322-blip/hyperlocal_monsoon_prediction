@@ -27,22 +27,23 @@ const RISK_ZOOM = 4.8;    // covered states switch from weather to monsoon risk
 const UNIT_ZOOM = 6.8;    // districts -> sub-districts
 const WIND_MIN_ZOOM = 2.6; // particles only where the whole view faces the viewer
 const BREAKS = { rain24: [1, 5, 15, 40], rain7: [10, 35, 80, 150], temp: [18, 24, 30, 36] };
-const WEATHER_OPTS = [["rain24", "Rain 24 h"], ["rain7", "Rain 7 days"], ["temp", "Temperature"]];
-const WEATHER_TITLE = {
-  rain24: "Rain in the next 24 hours (mm)",
-  rain7: "Rain in the next 7 days (mm)",
-  temp: "Temperature now (°C)",
-};
+// All visible words come from config/i18n/<lang>.yaml, sent by Python as data.i18n.
+let I18N = {};
+const T = (key, fmt = {}) => String(I18N[key] ?? key).replace(/\{(\w+)\}/g,
+  (_, k) => (fmt[k] ?? `{${k}}`));
 const WEATHER_FIELD = { rain24: "r24", rain7: "r7", temp: "t" };
 const WEATHER_UNIT = { rain24: "mm", rain7: "mm", temp: "°C" };
-const HAZARDS = [["onset", "Monsoon onset"], ["dry", "Dry spell"], ["heavy", "Heavy rain"]];
-const HAZARD_SHORT = { onset: "Onset", dry: "Dry spell", heavy: "Heavy rain" };
-const WEEKS = [[1, "1 week"], [2, "2 weeks"], [3, "3 weeks"], [4, "4 weeks"]];
+const weatherOpts = () => ["rain24", "rain7", "temp"].map((k) => [k, T(`wx_${k}`)]);
+const weatherTitle = (k) => T(`wx_title_${k}`);
+const hazardName = (k) => T(`hazard_${k}`);
+const weekLabel = (n) => (n === 1 ? T("week_n", { n }) : T("weeks_n", { n }));
+const weeksOpts = () => [1, 2, 3, 4].map((n) => [n, weekLabel(n)]);
 const LEVELS = {
-  red: ["◆", "High", "risk-high-ink"],
-  amber: ["▲", "Medium", "risk-med-ink"],
-  green: ["●", "Low", "risk-low-ink"],
+  red: ["◆", "high", "risk-high-ink"],
+  amber: ["▲", "medium", "risk-med-ink"],
+  green: ["●", "low", "risk-low-ink"],
 };
+const TIER_OPACITY = { validated: 0.92, experimental: 0.62, low: 0.62 };
 const LANG_LABEL = { hi: "हिन्दी", mr: "मराठी", en: "English" };
 // Rain playback: mm/h stops. Transparent below 0.5 mm/h, as the brief asks.
 const RAIN_STOPS = [0.5, 1, 2.5, 5, 10, 20];
@@ -75,8 +76,34 @@ const staticUrl = (path) => new URL(`app/static/${path}`, document.baseURI).toSt
 
 function levelHtml(level) {
   const l = LEVELS[level];
-  if (!l) return `<span style="color:var(--mo-muted)">○ No forecast</span>`;
-  return `<span style="color:var(--mo-${l[2]})"><span aria-hidden="true">${l[0]}</span> ${l[1]}</span>`;
+  if (!l) return `<span style="color:var(--mo-muted)">○ ${esc(T("level_none"))}</span>`;
+  return `<span style="color:var(--mo-${l[2]})"><span aria-hidden="true">${l[0]}</span> ${esc(T(`level_${l[1]}`))}</span>`;
+}
+
+function tierBadge(tier) {
+  return `<span class="mo-tier mo-tier-${esc(tier)}">${esc(T(`tier_${tier}`))}</span>`;
+}
+
+// Devanagari -> rough Latin, so "लातूर" finds "Latur" (names in the index are English).
+const DEVA = {"अ":"a","आ":"a","इ":"i","ई":"i","उ":"u","ऊ":"u","ऋ":"ri","ए":"e","ऐ":"ai","ओ":"o","औ":"au",
+  "क":"k","ख":"kh","ग":"g","घ":"gh","ङ":"n","च":"ch","छ":"chh","ज":"j","झ":"jh","ञ":"n","ट":"t","ठ":"th",
+  "ड":"d","ढ":"dh","ण":"n","त":"t","थ":"th","द":"d","ध":"dh","न":"n","प":"p","फ":"ph","ब":"b","भ":"bh",
+  "म":"m","य":"y","र":"r","ल":"l","ळ":"l","व":"v","श":"sh","ष":"sh","स":"s","ह":"h","ा":"a","ि":"i",
+  "ी":"i","ु":"u","ू":"u","ृ":"ri","े":"e","ै":"ai","ो":"o","ौ":"au","ं":"n","ँ":"n","ः":"h","्":"",
+  "़":"","क्ष":"ksh","ज्ञ":"gy"};
+const VOWEL_SIGNS = /[ािीुूृेैोौ्]/;
+function devaToLatin(text) {
+  let out = "";
+  const chars = [...text];
+  for (let i = 0; i < chars.length; i++) {
+    const c = chars[i], m = DEVA[c];
+    if (m === undefined) { out += c; continue; }
+    out += m;
+    const next = chars[i + 1];
+    // consonants carry an inherent "a" unless a vowel sign or virama follows
+    if (/[क-ह]/.test(c) && next && !VOWEL_SIGNS.test(next) && /[क-ह]/.test(next)) out += "a";
+  }
+  return out;
 }
 
 function bboxOf(geometry) {
@@ -149,6 +176,7 @@ function buildDom(root) {
   el.innerHTML = `
     <div class="mo-map">
       <div class="mo-canvas" role="region" aria-label="Map of India with weather and monsoon risk"></div>
+      <div class="mo-skeleton" aria-hidden="true"><div class="mo-skel-globe"></div></div>
       <canvas class="mo-wind" aria-hidden="true"></canvas>
       <div class="mo-search mo-surface" role="search">
         <label for="mo-q" class="mo-sr">Search a district or sub-district</label>
@@ -159,6 +187,9 @@ function buildDom(root) {
           placeholder="Search a district or sub-district" role="combobox" aria-expanded="false"
           aria-controls="mo-results" aria-autocomplete="list">
         <ul id="mo-results" class="mo-results" role="listbox" hidden></ul>
+        <button type="button" class="mo-locate"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12"
+          r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span></span></button>
       </div>
       <div class="mo-legend mo-surface" aria-live="polite">
         <button class="mo-legend-toggle" type="button" aria-expanded="true">Legend</button>
@@ -211,7 +242,8 @@ function buildDom(root) {
            panel: q(".mo-panel"), tip: q(".mo-tip"), note: q(".mo-note"), hint: q(".mo-hint"),
            controls: q(".mo-controls"), timeline: q(".mo-timeline"), play: q(".mo-play"),
            scrub: q(".mo-scrub"), tlLabel: q(".mo-tl-label"), tlCount: q(".mo-tl-count"),
-           tlCaption: q(".mo-tl-caption"), tlClose: q(".mo-tl-close"), season: q("#mo-season") };
+           tlCaption: q(".mo-tl-caption"), tlClose: q(".mo-tl-close"), season: q("#mo-season"),
+           locate: q(".mo-locate"), skeleton: q(".mo-skeleton") };
 }
 
 // ------------------------------------------------------------------ style
@@ -369,13 +401,19 @@ function addLayers(st) {
 
   map.addLayer({ id: "mo-states-fill", type: "fill", source: "mo-states",
     paint: { "fill-opacity": 0.88, "fill-opacity-transition": { duration: 400 } } }, before);
-  map.addLayer({ id: "mo-hatch", type: "fill", source: "mo-states", minzoom: 4.2,
-    filter: ["all", ["!", ["get", "covered"]], ["!", ["get", "disputed"]]],
-    paint: { "fill-pattern": "mo-hatch", "fill-opacity": 0.55 } }, before);
+  // Confidence tier is shown by pattern, never colour alone: validated solid,
+  // experimental lighter, low confidence lighter and hatched.
+  const tierOpacity = ["match", ["coalesce", ["feature-state", "tier"], "experimental"],
+    "validated", TIER_OPACITY.validated, "low", TIER_OPACITY.low, TIER_OPACITY.experimental];
+  const hatchOpacity = ["case", ["==", ["feature-state", "tier"], "low"], 0.75, 0];
   map.addLayer({ id: "mo-districts-fill", type: "fill", source: "mo-districts",
-    minzoom: RISK_ZOOM, maxzoom: UNIT_ZOOM, paint: { "fill-opacity": 0.9 } }, before);
+    minzoom: RISK_ZOOM, maxzoom: UNIT_ZOOM, paint: { "fill-opacity": tierOpacity } }, before);
   map.addLayer({ id: "mo-units-fill", type: "fill", source: "mo-units",
-    minzoom: UNIT_ZOOM, paint: { "fill-opacity": 0.9 } }, before);
+    minzoom: UNIT_ZOOM, paint: { "fill-opacity": tierOpacity } }, before);
+  map.addLayer({ id: "mo-hatch", type: "fill", source: "mo-units", minzoom: UNIT_ZOOM,
+    paint: { "fill-pattern": "mo-hatch", "fill-opacity": hatchOpacity } }, before);
+  map.addLayer({ id: "mo-hatch-d", type: "fill", source: "mo-districts", minzoom: RISK_ZOOM,
+    maxzoom: UNIT_ZOOM, paint: { "fill-pattern": "mo-hatch", "fill-opacity": hatchOpacity } }, before);
   map.addLayer({ id: "mo-replay-fill", type: "fill", source: "mo-units",
     layout: { visibility: "none" }, paint: { "fill-opacity": 0.92,
       "fill-color-transition": { duration: 300 } } }, before);
@@ -458,7 +496,7 @@ function update(st) {
   paint(st);
   paintWeather(st);
   paintRisk(st);
-  if (st.selected) openUnit(st, st.selected, false);
+  renderDetail(st);
   renderLegend(st); renderHint(st); renderNote(st);
 }
 
@@ -478,20 +516,22 @@ function riskFor(st) {
 }
 
 function paintRisk(st) {
-  const map = st.map, risk = riskFor(st), hz = st.sel.hazard;
-  const byDistrict = {};
+  const map = st.map, risk = riskFor(st), hz = st.sel.hazard, tiers = st.data.tiers || {};
+  const byDistrict = {}, tierCount = {};
   for (const f of st.geo.units) {
-    const id = f.properties.unit_id, r = risk[id] && risk[id][hz];
-    map.setFeatureState({ source: "mo-units", id }, { lvl: r ? r[1] : null, p: r ? r[0] : null });
-    if (r && r[0] != null) {
-      const did = f.properties.did;
-      if (!byDistrict[did] || r[0] > byDistrict[did][0]) byDistrict[did] = r;
-    }
+    const id = f.properties.unit_id, r = id && risk[id] && risk[id][hz];
+    if (!id) continue;
+    const tier = tiers[id] || "experimental";
+    map.setFeatureState({ source: "mo-units", id }, { lvl: r ? r[1] : null, p: r ? r[0] : null, tier });
+    const did = f.properties.did;
+    (tierCount[did] = tierCount[did] || {})[tier] = (tierCount[did][tier] || 0) + 1;
+    if (r && r[0] != null && (!byDistrict[did] || r[0] > byDistrict[did][0])) byDistrict[did] = r;
   }
   for (const f of st.geo.districts) {
-    const r = byDistrict[f.properties.did];
-    map.setFeatureState({ source: "mo-districts", id: f.properties.did },
-      { lvl: r ? r[1] : null, p: r ? r[0] : null });
+    const did = f.properties.did, r = byDistrict[did], counts = tierCount[did] || {};
+    const tier = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0] || "experimental";
+    map.setFeatureState({ source: "mo-districts", id: did },
+      { lvl: r ? r[1] : null, p: r ? r[0] : null, tier });
   }
 }
 
@@ -500,8 +540,8 @@ function ensureStates(st) {
   const map = st.map;
   if (!map || map.getZoom() < RISK_ZOOM - 0.6 || !st.meta) return;
   const b = map.getBounds();
-  for (const info of Object.values(st.meta.covered)) {
-    const key = info.key, box = st.stateBox[key];
+  for (const key of Object.keys(st.meta.states || {})) {
+    const box = st.stateBox[key];
     if (!box || st.loadedStates.has(key) || st.loading.has(key)) continue;
     const visible = !(box[2] < b.getWest() || box[0] > b.getEast() ||
                       box[3] < b.getSouth() || box[1] > b.getNorth());
@@ -521,7 +561,11 @@ function loadState(st, key) {
       map.getSource("mo-districts").setData({ type: "FeatureCollection", features: st.geo.districts });
       map.getSource("mo-units").setData({ type: "FeatureCollection", features: st.geo.units });
       // feature-state needs the features to exist; repaint once the source has them.
-      map.once("idle", () => { paintRisk(st); if (st.play && st.play.kind === "advance") seekAdvance(st, st.play.index); });
+      map.once("idle", () => {
+        paintRisk(st);
+        if (st.selected) map.setFilter("mo-selected", ["==", ["get", "unit_id"], st.selected]);
+        if (st.play && st.play.kind === "advance") seekAdvance(st, st.play.index);
+      });
     })
     .finally(() => st.loading.delete(key));
   st.loading.set(key, p);
@@ -549,18 +593,20 @@ function renderLegend(st) {
       <p class="hint">Onset: 20 mm in 3 days with no 7-day dry spell in the next 30 days.</p></div>`;
   } else {
     const ramp = d.ramps[sel.weather], b = BREAKS[sel.weather];
-    html = `<div class="mo-legend-block"><h4>${esc(WEATHER_TITLE[sel.weather])}</h4>
+    html = `<div class="mo-legend-block"><h4>${esc(weatherTitle(sel.weather))}</h4>
       <div class="ramp">${ramp.map((c) => `<span style="background:${c}"></span>`).join("")}</div>
       <div class="ramp-labels">${b.map((x, i) => `<span style="left:${(i + 1) * 20}%">${x}</span>`).join("")}</div></div>`;
     const zoomedIn = map && map.getZoom() >= RISK_ZOOM;
-    html += `<div class="mo-legend-block"><h4>${esc(HAZARD_SHORT[sel.hazard])} · next ${esc(WEEKS[sel.week - 1][1])}</h4>
-      <div class="row">${sw(st, "risk-high")}<span class="ico" style="color:var(--mo-risk-high-ink)">◆</span>High · over 60%</div>
-      <div class="row">${sw(st, "risk-med")}<span class="ico" style="color:var(--mo-risk-med-ink)">▲</span>Medium · 30–60%</div>
-      <div class="row">${sw(st, "risk-low")}<span class="ico" style="color:var(--mo-risk-low-ink)">●</span>Low · under 30%</div>
-      <div class="row">${sw(st, "nofc")}<span class="ico" style="color:var(--mo-muted)">○</span>No forecast yet</div>
-      <div class="row"><span class="sw" style="background:repeating-linear-gradient(135deg,${tok(st, "hatch")} 0 1.5px,transparent 1.5px 5px)"></span><span class="ico"></span>Forecasts coming soon</div>
-      ${zoomedIn && map.getZoom() < UNIT_ZOOM
-        ? `<p class="hint">Districts show their highest sub-district risk.</p>` : ""}</div>`;
+    html += `<div class="mo-legend-block"><h4>${esc(hazardName(sel.hazard))} · ${esc(weekLabel(sel.week))}</h4>
+      <div class="row">${sw(st, "risk-high")}<span class="ico" style="color:var(--mo-risk-high-ink)">◆</span>${esc(T("band_high"))}</div>
+      <div class="row">${sw(st, "risk-med")}<span class="ico" style="color:var(--mo-risk-med-ink)">▲</span>${esc(T("band_medium"))}</div>
+      <div class="row">${sw(st, "risk-low")}<span class="ico" style="color:var(--mo-risk-low-ink)">●</span>${esc(T("band_low"))}</div>
+      <div class="row">${sw(st, "nofc")}<span class="ico" style="color:var(--mo-muted)">○</span>${esc(T("band_none"))}</div>
+      ${zoomedIn && map.getZoom() < UNIT_ZOOM ? `<p class="hint">${esc(T("district_max_note"))}</p>` : ""}</div>
+      <div class="mo-legend-block"><h4>${esc(T("tier_legend"))}</h4>
+      <div class="row"><span class="sw" style="background:${tok(st, "risk-med")}"></span>${esc(T("tier_solid"))}</div>
+      <div class="row"><span class="sw" style="background:${tok(st, "risk-med")};opacity:.55"></span>${esc(T("tier_light"))}</div>
+      <div class="row"><span class="sw" style="background:repeating-linear-gradient(135deg,${tok(st, "hatch")} 0 1.5px,transparent 1.5px 5px),${tok(st, "risk-med")};opacity:.7"></span>${esc(T("tier_hatched"))}</div></div>`;
   }
   st.dom.legendBody.innerHTML = html;
   // The details panel stops above the legend instead of covering it.
@@ -572,36 +618,58 @@ function renderHint(st) {
   if (!map) return;
   const show = !st.play && map.getZoom() < RISK_ZOOM - 0.4;
   st.dom.hint.hidden = !show;
-  if (show) st.dom.hint.textContent = "Select a state outlined in green, or zoom in, to see monsoon risk";
+  if (show) st.dom.hint.textContent = T("pick_area");
 }
 
 function renderNote(st) {
   const official = st.meta && st.meta.official;
   st.dom.note.hidden = !!official;
-  if (!official) st.dom.note.textContent = "Boundaries indicative, not official";
+  if (!official) st.dom.note.textContent = T("boundaries_note");
 }
 
 // ------------------------------------------------------------------ controls panel
 function renderControls(st) {
   const c = st.dom.controls, sel = st.sel, d = st.data;
   const slot = (n) => c.querySelector(`[data-slot="${n}"]`);
-  if (!slot("weather").firstChild) {
-    slot("weather").innerHTML = segmented("mo-weather", "Weather layer", WEATHER_OPTS, sel.weather);
-    slot("hazard").innerHTML = segmented("mo-hazard", "Hazard", HAZARDS.map(([k]) => [k, HAZARD_SHORT[k]]), sel.hazard);
-    slot("week").innerHTML = segmented("mo-week", "Looking ahead", WEEKS, sel.week);
-    c.addEventListener("change", (e) => {
-      const t = e.target;
-      if (t.name === "mo-weather") setSel(st, "weather", t.value);
-      else if (t.name === "mo-hazard") setSel(st, "hazard", t.value);
-      else if (t.name === "mo-week") setSel(st, "week", Number(t.value));
-    });
+  const hazards = (d.hazards && d.hazards.length ? d.hazards : ["onset", "dry", "heavy"]);
+  const sig = `${d.lang}|${hazards.join(",")}`;
+  if (st.controlsSig !== sig) {
+    // (Re)build in the current language; one change listener is attached once.
+    slot("weather").innerHTML = segmented("mo-weather", T("weather_layer"), weatherOpts(), sel.weather);
+    slot("hazard").innerHTML = segmented("mo-hazard", T("monsoon_risk"),
+      hazards.map((k) => [k, hazardName(k)]), sel.hazard);
+    slot("week").innerHTML = segmented("mo-week", T("looking_ahead"), weeksOpts(), sel.week);
+    c.querySelector(".mo-controls-head h2").textContent = T("map_options");
+    const heads = c.querySelectorAll(".mo-grp > h3");
+    heads[0].textContent = T("weather_layer"); heads[1].textContent = T("monsoon_risk");
+    heads[2].textContent = T("animations");
+    c.querySelector('[data-anim="wind"] > span:last-child').firstChild.textContent = `${T("wind_flow")} `;
+    c.querySelector('[data-anim="rain"]').innerHTML =
+      `<span aria-hidden="true">▶</span> ${esc(T("rain_forecast_btn"))} <small>7 d</small>`;
+    c.querySelector('[data-anim="advance"] button').innerHTML =
+      `<span aria-hidden="true">▶</span> ${esc(T("monsoon_advance_btn"))}`;
+    st.dom.input.placeholder = T("search_placeholder");
+    st.dom.input.setAttribute("aria-label", T("search_placeholder"));
+    st.dom.locate.querySelector("span").textContent = T("use_location");
+    st.dom.legendToggle.textContent = T("legend");
+    const collapseBtn = c.querySelector(".mo-collapse");
+    collapseBtn.textContent = c.classList.contains("collapsed") ? T("show") : T("hide");
+    if (!st.controlsSig) {
+      c.addEventListener("change", (e) => {
+        const t = e.target;
+        if (t.name === "mo-weather") setSel(st, "weather", t.value);
+        else if (t.name === "mo-hazard") setSel(st, "hazard", t.value);
+        else if (t.name === "mo-week") setSel(st, "week", Number(t.value));
+      });
+    }
+    st.controlsSig = sig;
   } else {
     for (const [name, v] of [["mo-weather", sel.weather], ["mo-hazard", sel.hazard], ["mo-week", sel.week]]) {
       const input = c.querySelector(`input[name="${name}"][value="${v}"]`);
       if (input && !input.checked) input.checked = true;
     }
   }
-  c.querySelector(".mo-window").textContent = d.week === sel.week ? d.windowLabel : "Updating…";
+  c.querySelector(".mo-window").textContent = d.week === sel.week ? d.windowLabel : T("loading");
 
   // Animations: options whose data file is missing are hidden, never an error.
   const a = d.anim || {};
@@ -621,83 +689,109 @@ function setSel(st, key, value) {
   try { st.component.setStateValue(key, value); } catch (e) { /* not mounted with state */ }
   paint(st); paintWeather(st); paintRisk(st); renderLegend(st);
   st.dom.controls.querySelector(".mo-window").textContent =
-    st.data.week === st.sel.week ? st.data.windowLabel : "Updating…";
-  if (st.selected) openUnit(st, st.selected, false);
+    st.data.week === st.sel.week ? st.data.windowLabel : T("loading");
 }
 
 // ------------------------------------------------------------------ details panel
-function langsFor(st, stateKey) {
-  return (st.data.langs && st.data.langs[stateKey]) || ["hi", "en"];
-}
-
-function openUnit(st, unitId, focus = true) {
-  const d = st.data, f = st.geo.units.find((u) => u.properties.unit_id === unitId);
-  if (!f) return;
+function selectUnit(st, unitId, shownName = null) {
+  // The server builds the panel (app/unit_detail.py) in the viewer's language; this
+  // asks for it and shows a loading state until it arrives with the next rerun.
+  if (!unitId) return;
   st.selected = unitId;
-  st.map.setFilter("mo-selected", ["==", ["get", "unit_id"], unitId]);
-  const p = f.properties, risk = riskFor(st)[unitId] || {};
-  const rows = HAZARDS.map(([k, label]) => {
-    const r = risk[k];
-    return `<tr><td>${label}</td><td class="pct">${r ? pct(r[0]) : "—"}</td>
-      <td class="lvl">${levelHtml(r && r[1])}</td></tr>`;
-  }).join("");
-  const adv = d.adv[unitId];
-  let advice;
-  if (!adv) {
-    advice = `<p class="note">No approved advisory for this area in this forecast.</p>`;
-  } else if (adv.edited) {
-    advice = `<div class="tabs" role="tablist"><button role="tab" aria-selected="true" type="button">English</button></div>
-      <p class="advice" lang="en">${esc(adv.en)}</p>
-      <p class="note">Edited and approved by an agriculture officer.</p>`;
-  } else {
-    const wanted = langsFor(st, p.state_key), langs = wanted.filter((l) => adv[l]);
-    const missing = wanted.filter((l) => !adv[l]).map((l) => LANG_LABEL[l]);
-    advice = `<div class="tabs" role="tablist" aria-label="Advisory language">${langs.map((l, i) =>
-      `<button role="tab" type="button" aria-controls="mo-adv" data-lang="${l}"
-        aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${LANG_LABEL[l]}</button>`).join("")}</div>
-      <p class="advice" id="mo-adv" role="tabpanel" lang="${langs[0]}">${esc(adv[langs[0]])}</p>
-      ${missing.length ? `<p class="note">${esc(missing.join(" and "))} text is not available yet for this advisory.</p>` : ""}`;
+  st.selectedName = shownName;
+  if (st.map.getLayer("mo-selected")) st.map.setFilter("mo-selected", ["==", ["get", "unit_id"], unitId]);
+  const d = st.data.detail;
+  if (!d || d.unit_id !== unitId) {
+    st.dom.panel.innerHTML = `<button class="close" type="button" aria-label="${esc(T("close"))}">×</button>
+      <p class="note mo-loading">${esc(T("loading"))}</p>`;
+    st.dom.panel.hidden = false;
+    st.dom.wrap.classList.add("mo-panel-open");
+    bindPanel(st, null);
   }
-  const noForecast = !Object.keys(risk).length;
-  st.dom.panel.innerHTML = `
-    <button class="close" type="button" aria-label="Close details">×</button>
-    <h3>${esc(p.name_ok ? p.unit_name : "Unnamed area")}</h3>
-    <p class="sub">${esc(p.district)} district, ${esc(d.stateNames[p.state_key] || p.state)}</p>
-    ${noForecast
-      ? `<p class="note">No forecast has been issued for this sub-district yet. Forecasts are
-         being rolled out district by district.</p>`
-      : `<p class="week">Next ${esc(WEEKS[st.sel.week - 1][1])} · ${esc(d.windowLabel)}</p><table>${rows}</table>`}
-    ${noForecast ? "" : advice}
-    <p class="foot">Forecast for ${esc(d.issuedFor)} · prepared ${esc(d.updated)}</p>`;
-  st.dom.panel.hidden = false;
-  bindPanel(st, adv);
-  if (focus) st.dom.panel.focus({ preventScroll: true });
+  try { st.component.setStateValue("unit", unitId); } catch (e) { /* no state */ }
+  renderDetail(st);
 }
 
-function openState(st, key, name) {
-  const d = st.data, rec = d.weatherStates[key];
-  const covered = !!Object.values(st.meta.covered).find((c) => c.key === key);
-  const w = (f, unit) => (rec && rec[f] != null ? `${rec[f]} ${unit}` : "—");
+function chartSvg(outlook) {
+  // Weekly rain: likely range bar (p10-p90), most likely (p50) tick, normal dashed line.
+  if (!outlook || !outlook.length) return "";
+  const W = 300, H = 150, L = 34, B = 24, top = 10;
+  const maxV = Math.max(5, ...outlook.map((o) => Math.max(o.p90 || 0, o.normal || 0))) * 1.1;
+  const x = (i) => L + (i + 0.5) * ((W - L - 6) / outlook.length);
+  const y = (v) => top + (H - top - B) * (1 - (v || 0) / maxV);
+  const bw = Math.min(34, (W - L) / outlook.length * 0.45);
+  const ticks = [0, maxV / 2, maxV].map((v) => Math.round(v));
+  let g = ticks.map((v) => `<line x1="${L}" x2="${W - 4}" y1="${y(v)}" y2="${y(v)}" class="grid"/>
+    <text x="${L - 4}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join("");
+  g += `<line x1="${L}" x2="${L}" y1="${top}" y2="${H - B}" class="today"/>
+    <text x="${L + 3}" y="${top + 9}" class="lab">${esc(T("chart_today"))}</text>`;
+  outlook.forEach((o, i) => {
+    g += `<rect x="${x(i) - bw / 2}" y="${y(o.p90)}" width="${bw}" height="${Math.max(1, y(o.p10) - y(o.p90))}" class="range" rx="3"/>
+      <line x1="${x(i) - bw / 2}" x2="${x(i) + bw / 2}" y1="${y(o.p50)}" y2="${y(o.p50)}" class="median"/>
+      ${o.normal != null ? `<line x1="${x(i) - bw / 2 - 5}" x2="${x(i) + bw / 2 + 5}" y1="${y(o.normal)}" y2="${y(o.normal)}" class="normal"/>` : ""}
+      <text x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(T("week_card", { n: o.week }))}</text>`;
+  });
+  return `<figure class="mo-chart"><figcaption>${esc(T("chart_title"))} (mm)</figcaption>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(T("chart_title"))}">${g}</svg>
+    <p class="mo-chart-key"><span class="k range"></span>${esc(T("chart_range"))}
+      <span class="k median"></span>${esc(T("chart_median"))} <span class="k normal"></span>${esc(T("chart_normal"))}</p></figure>`;
+}
+
+function renderDetail(st) {
+  const d = st.data && st.data.detail;
+  if (!st.selected || !d || d.unit_id !== st.selected) return;
+  const w = d.weather || {};
+  const mm = (v) => (v == null ? "—" : `${Math.round(v)} mm`);
+  const title = st.selectedName && st.selectedName !== d.name ? st.selectedName : d.name;
+  const areaNote = st.selectedName && st.selectedName !== d.name
+    ? `<p class="sub">${esc(T("forecast_area", { name: d.name }))}</p>` : "";
+  const weeks = d.has_forecast ? d.weeks.map((wk) => `<div class="mo-week">
+      <h5>${esc(wk.title)}</h5>${wk.items.map((it) => `<p><span class="lvl">${levelHtml(it.level)}</span>
+      · ${esc(it.sentence)}</p>`).join("")}</div>`).join("")
+    : `<p class="note">${esc(T("no_forecast_unit"))}</p>`;
+  const crops = (d.crops || []).map((c) => `<li class="mo-crop mo-crop-${esc(c.level)}">
+      <div><b>${esc(c.name)}</b> <span class="lvl">${levelHtml({ high: "red", medium: "amber", low: "green" }[c.level])}</span></div>
+      <p>${esc(c.reason)}</p>${(c.notes || []).map((n) => `<p class="note">${esc(n)}</p>`).join("")}</li>`).join("");
+  const adv = d.advisory;
+  let advice = `<p class="note">${esc(T("no_advisory"))}</p>`;
+  if (adv) {
+    const langs = ["hi", "mr", "en"].filter((l) => adv[l]);
+    const names = { hi: "हिन्दी", mr: "मराठी", en: "English" };
+    advice = `<div class="tabs" role="tablist" aria-label="${esc(T("advisory"))}">${langs.map((l, i) =>
+      `<button role="tab" type="button" data-lang="${l}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${names[l]}</button>`).join("")}</div>
+      <p class="advice" id="mo-adv" role="tabpanel" lang="${langs[0]}">${esc(adv[langs[0]])}</p>`;
+  }
   st.dom.panel.innerHTML = `
-    <button class="close" type="button" aria-label="Close details">×</button>
-    <h3>${esc(name)}</h3>
-    <table>
-      <tr><td>Rain, next 24 hours</td><td class="pct">${w("r24", "mm")}</td></tr>
-      <tr><td>Rain, next 7 days</td><td class="pct">${w("r7", "mm")}</td></tr>
-      <tr><td>Temperature now</td><td class="pct">${w("t", "°C")}</td></tr>
-    </table>
-    <p class="note">${covered ? "Zoom in to see monsoon risk by district and sub-district."
-                               : "Monsoon forecasts coming soon for this state."}</p>
-    <p class="foot">Average of ${rec ? rec.n : 0} districts · weather updated ${esc(d.weatherUpdated)}</p>`;
+    <button class="close" type="button" aria-label="${esc(T("close"))}">×</button>
+    <h3>${esc(title)}</h3>
+    <p class="sub">${esc(d.district)}, ${esc(d.state)}</p>${areaNote}
+    <p class="mo-meta">${tierBadge(d.tier)} <span>${esc(d.updated)}</span></p>
+    ${d.delayed ? `<p class="mo-delayed" role="status">${esc(d.delayed_text)}</p>` : ""}
+    <section><h4>${esc(T("weather_now"))}</h4><table>
+      <tr><td>${esc(T("rain_last_7"))}</td><td class="pct">${mm(w.rain_7d)} <small>(${esc(T("normal"))} ${mm(w.normal_7d)})</small></td></tr>
+      <tr><td>${esc(T("rain_last_14"))}</td><td class="pct">${mm(w.rain_14d)} <small>(${esc(T("normal"))} ${mm(w.normal_14d)})</small></td></tr>
+      <tr><td>${esc(T("temperature_now"))}</td><td class="pct">${w.temp_c == null ? "—" : `${w.temp_c} °C`}</td></tr>
+      <tr><td>${esc(T("humidity_now"))}</td><td class="pct">${w.rh_pct == null ? "—" : `${Math.round(w.rh_pct)}%`}</td></tr>
+      <tr><td>${esc(T("soil_moisture"))}</td><td class="pct">${w.soil_moisture == null ? "—" : `${Math.round(w.soil_moisture * 100)}%`}</td></tr>
+    </table></section>
+    <section><h4>${esc(T("next_30"))}</h4><div class="mo-weeks">${weeks}</div>
+      ${chartSvg(d.outlook)}<p class="note">${esc(d.month_sentence)}</p></section>
+    <section><h4>${esc(T("crops_here"))}</h4><ul class="mo-crops">${crops}</ul>
+      <p class="note">${esc(d.crops_note)}</p></section>
+    <section><h4>${esc(T("advisory"))}</h4>${advice}</section>
+    <p class="foot">${esc(d.source_line)}${d.ml_note ? ` ${esc(d.ml_note)}` : ""}</p>
+    ${d.share ? `<a class="mo-share" href="${esc(d.share)}" target="_blank" rel="noopener">${esc(T("share_whatsapp"))}</a>` : ""}`;
   st.dom.panel.hidden = false;
-  bindPanel(st, null);
-  st.dom.panel.focus({ preventScroll: true });
+  st.dom.wrap.classList.add("mo-panel-open");
+  bindPanel(st, adv);
 }
 
 function closePanel(st) {
   st.dom.panel.hidden = true;
+  st.dom.wrap.classList.remove("mo-panel-open");
   st.selected = null;
   if (st.map.getLayer("mo-selected")) st.map.setFilter("mo-selected", ["==", ["get", "unit_id"], ""]);
+  try { st.component.setStateValue("unit", ""); } catch (e) { /* no state */ }
 }
 
 function bindPanel(st, adv) {
@@ -742,14 +836,12 @@ function wireUi(st) {
     const feats = map.queryRenderedFeatures(e.point, { layers: live() });
     if (!feats.length) { closePanel(st); return; }
     const f = feats[0], layer = f.layer.id, p = f.properties;
-    if (layer === "mo-units-fill") openUnit(st, p.unit_id);
+    if (layer === "mo-units-fill") selectUnit(st, p.unit_id, p.name);
     else if (layer === "mo-districts-fill") {
       const src = st.geo.districts.find((x) => x.properties.did === p.did);
       if (src) map.fitBounds(bboxOf(src.geometry), { padding: 60, maxZoom: 9, essential: false });
-    } else if (layer === "mo-states-fill") {
-      if (p.covered && map.getZoom() < RISK_ZOOM) {
-        map.fitBounds(st.stateBox[p.state_key], { padding: 40, essential: false });
-      } else if (!p.disputed) openState(st, p.state_key, p.state);
+    } else if (layer === "mo-states-fill" && !p.disputed) {
+      map.fitBounds(st.stateBox[p.state_key], { padding: 40, essential: false });
     }
   });
 
@@ -768,7 +860,7 @@ function wireUi(st) {
   const setCollapsed = (v) => {
     dom.controls.classList.toggle("collapsed", v);
     collapse.setAttribute("aria-expanded", String(!v));
-    collapse.textContent = v ? "Show" : "Hide";
+    collapse.textContent = v ? T("show") : T("hide");
     ss.set(SS_PANEL, v ? "1" : "0");
   };
   collapse.onclick = () => setCollapsed(!dom.controls.classList.contains("collapsed"));
@@ -783,6 +875,7 @@ function wireUi(st) {
   dom.controls.querySelector('[data-anim="advance"] button').onclick = () => startAdvance(st, Number(dom.season.value));
   wireTimeline(st);
   wireSearch(st);
+  dom.locate.onclick = () => locateMe(st);
   document.addEventListener("visibilitychange", () => (document.hidden ? windPause(st) : windResume(st)));
 }
 
@@ -790,20 +883,18 @@ function tipHtml(st, f) {
   const d = st.data, p = f.properties, layer = f.layer.id;
   if (layer === "mo-units-fill" || layer === "mo-districts-fill") {
     const r = f.state && f.state.p != null ? [f.state.p, f.state.lvl] : null;
-    const name = layer === "mo-units-fill" ? (p.name_ok ? p.unit_name : "Unnamed area") : `${p.district} district`;
-    return `<b>${esc(name)}</b><br>${r ? `${esc(HAZARD_SHORT[st.sel.hazard])} ${pct(r[0])} · ${levelHtml(r[1])}`
-                                       : "No forecast yet"}`;
+    const name = layer === "mo-units-fill" ? p.name : p.district;
+    return `<b>${esc(name)}</b> ${tierBadge(f.state.tier || "experimental")}<br>${r
+      ? `${esc(hazardName(st.sel.hazard))} ${pct(r[0])} · ${levelHtml(r[1])}` : esc(T("band_none"))}`;
   }
   const rec = d.weatherStates[p.state_key], field = WEATHER_FIELD[st.sel.weather];
   const val = rec && rec[field] != null ? `${rec[field]} ${WEATHER_UNIT[st.sel.weather]}` : "—";
-  const extra = p.disputed ? "" : p.covered
-    ? (st.map.getZoom() < RISK_ZOOM ? "<br>Select to see monsoon risk" : "")
-    : "<br>Monsoon forecasts coming soon";
-  return `<b>${esc(p.state)}</b><br>${esc(WEATHER_TITLE[st.sel.weather].replace(/ \(.*\)$/, ""))}: ${esc(val)}${extra}`;
+  const extra = !p.disputed && st.map.getZoom() < RISK_ZOOM ? `<br>${esc(T("pick_area"))}` : "";
+  return `<b>${esc(p.state)}</b><br>${esc(weatherTitle(st.sel.weather).replace(/ \(.*\)$/, ""))}: ${esc(val)}${extra}`;
 }
 
 // ------------------------------------------------------------------ search
-function norm(s) { return String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim(); }
+function norm(s) { return devaToLatin(String(s)).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim(); }
 
 function score(query, name) {
   const n = norm(name);
@@ -819,7 +910,8 @@ function score(query, name) {
 
 function wireSearch(st) {
   const { input, results } = st.dom;
-  const ensureIndex = () => st.search || (st.search = getJSON("search_index.json").catch(() => []));
+  const ensureIndex = () => st.search || (st.search = getJSON("search_index.json")
+    .then((idx) => (st.searchIndex = idx)).catch(() => []));
   const render = async () => {
     const q = norm(input.value);
     if (!q) { results.hidden = true; input.setAttribute("aria-expanded", "false"); return; }
@@ -828,9 +920,9 @@ function wireSearch(st) {
       .sort((a, b) => b[0] - a[0] || a[1].n.length - b[1].n.length).slice(0, 8).map((x) => x[1]);
     st.hits = hits; st.activeResult = hits.length ? 0 : -1;
     results.innerHTML = hits.length ? hits.map((h, i) => `<li role="option" id="mo-r${i}"
-      aria-selected="${i === 0}" data-i="${i}">${esc(h.n)}<small>${h.k === "subdistrict"
-        ? `Sub-district · ${esc(h.d)}, ${esc(h.s)}` : `District · ${esc(h.s)}`}</small></li>`).join("")
-      : `<li class="mo-empty" role="option" aria-disabled="true">No match in India's districts</li>`;
+      aria-selected="${i === 0}" data-i="${i}">${esc(h.n)}<small>${esc(T(`kind_${h.k}`))} · ${
+        h.d ? `${esc(h.d)}, ` : ""}${esc(h.s)}</small></li>`).join("")
+      : `<li class="mo-empty" role="option" aria-disabled="true">${esc(T("no_match"))}</li>`;
     results.hidden = false;
     input.setAttribute("aria-expanded", "true");
     input.setAttribute("aria-activedescendant", hits.length ? "mo-r0" : "");
@@ -847,11 +939,12 @@ function wireSearch(st) {
     results.hidden = true; input.setAttribute("aria-expanded", "false");
     input.value = h.n;
     if (st.play) stopPlayback(st);
-    const sub = h.k === "subdistrict";
-    st.map.fitBounds(h.b, { padding: 60, maxZoom: sub ? 9 : 7.6, essential: false });
+    const fine = h.k !== "district";
+    st.map.fitBounds(h.b, { padding: 60, maxZoom: fine ? 9 : 7.6, essential: false });
     if (h.st) {
       await loadState(st, h.st);
-      if (sub && h.id) st.map.once("idle", () => openUnit(st, h.id, false));
+      const target = h.id || (fine && h.c ? nearestUnit(st, h.c, h.st) : null);
+      if (target) selectUnit(st, target.id || target, target.n || h.n);
     }
   };
   input.addEventListener("focus", ensureIndex);
@@ -867,6 +960,34 @@ function wireSearch(st) {
     if (li) { e.preventDefault(); choose(Number(li.dataset.i)); }
   });
   input.addEventListener("blur", () => setTimeout(() => { results.hidden = true; }, 150));
+}
+
+function nearestUnit(st, c, stateKey) {
+  // The sub-district whose centre is closest to a point (block search / my location).
+  const index = st.searchIndex || [];
+  let best = null, bestD = Infinity;
+  for (const e of index) {
+    if (e.k !== "subdistrict" || !e.id || (stateKey && e.st !== stateKey)) continue;
+    const dd = (e.c[0] - c[0]) ** 2 + (e.c[1] - c[1]) ** 2;
+    if (dd < bestD) { bestD = dd; best = e; }
+  }
+  return best ? { id: best.id, n: best.n } : null;
+}
+
+function locateMe(st) {
+  // Browser geolocation on click only; the position is used once and never stored.
+  if (!navigator.geolocation) { st.dom.input.placeholder = T("location_denied"); return; }
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const c = [pos.coords.longitude, pos.coords.latitude];
+    st.searchIndex = st.searchIndex || await getJSON("search_index.json").catch(() => []);
+    const hit = nearestUnit(st, c, null);
+    if (!hit) { st.dom.input.placeholder = T("location_denied"); return; }
+    const entry = st.searchIndex.find((e) => e.id === hit.id && e.k === "subdistrict");
+    st.map.flyTo({ center: c, zoom: 8.5, essential: false });
+    if (entry) await loadState(st, entry.st);
+    selectUnit(st, hit.id, hit.n);
+  }, () => { st.dom.input.value = ""; st.dom.input.placeholder = T("location_denied"); },
+  { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
 }
 
 // ================================================================== WIND FLOW
@@ -1289,8 +1410,21 @@ export default function (component) {
   }
   st.component = component;
   st.data = data;
+  I18N = data.i18n || I18N;
   st.sel = { hazard: data.hazard, week: data.week, weather: data.weather };
-  st.ready.then(() => {
+  st.ready.then(async () => {
+    st.dom.skeleton.hidden = true;
+    // A shared link (?unit=...) or the Next-30-days page picked an area: open it once.
+    if (data.selected && data.selected !== st.opened) {
+      st.opened = data.selected;
+      st.searchIndex = st.searchIndex || await getJSON("search_index.json").catch(() => []);
+      const entry = st.searchIndex.find((e) => e.id === data.selected && e.k === "subdistrict");
+      if (entry) {
+        st.map.fitBounds(entry.b, { padding: 60, maxZoom: 9, essential: false });
+        await loadState(st, entry.st);
+      }
+      selectUnit(st, data.selected, entry ? entry.n : null);
+    }
     st.dom.wrap.style.setProperty("--mo-ctrl-filter", data.dark ? "invert(1)" : "none");
     renderControls(st);
     update(st);

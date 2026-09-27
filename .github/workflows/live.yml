@@ -1,0 +1,46 @@
+name: Live national forecast
+
+# Daily hybrid run for all of India: EC46 ensemble (Open-Meteo) + IMD observed rain +
+# the 0.5 deg short-range forecast, written to the cloud database. It also refreshes the
+# public national weather layer, which replaced the old 3-hourly weather job to keep
+# Open-Meteo use near 7,950 calls/day (config/live.yaml). Never commits to git.
+#
+# Needs the repository secret DATABASE_URL_CLOUD, read by NAME via --db-url-env.
+
+on:
+  schedule:
+    - cron: "30 4 * * *"        # 04:30 UTC = 10:00 IST
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-live.txt
+
+      - name: Install
+        run: python -m pip install -r requirements-live.txt
+
+      - name: Live run (writes a job summary)
+        env:
+          DATABASE_URL_CLOUD: ${{ secrets.DATABASE_URL_CLOUD }}
+        run: python -m src.live.run --db-url-env DATABASE_URL_CLOUD
+
+      - name: Verify forecasts whose window has closed
+        env:
+          DATABASE_URL_CLOUD: ${{ secrets.DATABASE_URL_CLOUD }}
+        run: python -m src.live.verify --db-url-env DATABASE_URL_CLOUD

@@ -346,6 +346,136 @@ class WeatherGrid(Base):
     n_points: Mapped[int] = mapped_column(Integer)
 
 
+# --------------------------------------------------------------------------
+# Live national engine (src/live/, GitHub Actions daily). New tables only, so no
+# migration of existing Postgres tables is ever needed. Probabilities are stored as
+# per-mille SmallIntegers to keep the Neon free tier (0.5 GB) comfortable.
+# --------------------------------------------------------------------------
+class LiveUnit(Base):
+    """All-India units with their confidence tier (the pilot `units` table is left alone)."""
+
+    __tablename__ = "live_units"
+
+    unit_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    unit_name: Mapped[str] = mapped_column(String(128))
+    name_ok: Mapped[bool] = mapped_column(Boolean, default=True)
+    district: Mapped[str] = mapped_column(String(128), index=True)
+    state: Mapped[str] = mapped_column(String(128), index=True)
+    tier: Mapped[str] = mapped_column(String(16))
+    seasonal_low: Mapped[bool] = mapped_column(Boolean, default=False)
+    lat: Mapped[float] = mapped_column(Float)
+    lon: Mapped[float] = mapped_column(Float)
+
+
+class LiveRun(Base):
+    __tablename__ = "live_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_date: Mapped[dt.date] = mapped_column(Date, index=True)
+    run_type: Mapped[str] = mapped_column(String(16), default="live", index=True)  # live/replay
+    created_utc: Mapped[dt.datetime] = mapped_column(UTCDateTime, default=utcnow)
+    status: Mapped[str] = mapped_column(String(16), default="ok")        # ok / partial
+    data_delayed: Mapped[bool] = mapped_column(Boolean, default=False)
+    season: Mapped[str] = mapped_column(String(16))                      # monsoon / post
+    hazards: Mapped[str] = mapped_column(String(128))
+    sources: Mapped[str] = mapped_column(Text)                           # JSON
+    calls: Mapped[float] = mapped_column(Float, default=0.0)             # Open-Meteo weight
+    n_units: Mapped[int] = mapped_column(Integer, default=0)
+    keep_detail: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class LiveForecast(Base):
+    __tablename__ = "live_forecasts"
+
+    run_id: Mapped[int] = mapped_column(ForeignKey("live_runs.id", ondelete="CASCADE"),
+                                        primary_key=True)
+    unit_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    hazard: Mapped[str] = mapped_column(String(16), primary_key=True)
+    horizon: Mapped[int] = mapped_column(Integer, primary_key=True)
+    p_ml: Mapped[int | None] = mapped_column(Integer, nullable=True)     # per mille
+    p_ec46: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    p_blend: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    level: Mapped[str] = mapped_column(String(8))
+
+
+class LiveOutlook(Base):
+    __tablename__ = "live_outlook"
+
+    run_id: Mapped[int] = mapped_column(ForeignKey("live_runs.id", ondelete="CASCADE"),
+                                        primary_key=True)
+    unit_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    week: Mapped[int] = mapped_column(Integer, primary_key=True)          # 1..4
+    p10: Mapped[float] = mapped_column(Float)
+    p50: Mapped[float] = mapped_column(Float)
+    p90: Mapped[float] = mapped_column(Float)
+    normal: Mapped[float | None] = mapped_column(Float, nullable=True)
+    p_below: Mapped[int | None] = mapped_column(Integer, nullable=True)   # per mille
+    p_near: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    p_above: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # EC46 ensemble-mean weekly averages, for crop threats in weeks 2-4.
+    t_mean: Mapped[float | None] = mapped_column(Float, nullable=True)
+    rh_mean: Mapped[float | None] = mapped_column(Float, nullable=True)
+    soil_mean: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
+class LiveWeather(Base):
+    """Observed and near-term weather per unit for the latest run (the side panel)."""
+
+    __tablename__ = "live_weather"
+
+    run_id: Mapped[int] = mapped_column(ForeignKey("live_runs.id", ondelete="CASCADE"),
+                                        primary_key=True)
+    unit_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    rain_7d: Mapped[float | None] = mapped_column(Float, nullable=True)
+    rain_14d: Mapped[float | None] = mapped_column(Float, nullable=True)
+    normal_7d: Mapped[float | None] = mapped_column(Float, nullable=True)
+    normal_14d: Mapped[float | None] = mapped_column(Float, nullable=True)
+    temp_c: Mapped[float | None] = mapped_column(Float, nullable=True)
+    rh_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+    soil_moisture: Mapped[float | None] = mapped_column(Float, nullable=True)
+    rain_next_24h: Mapped[float | None] = mapped_column(Float, nullable=True)
+    rain_next_7d: Mapped[float | None] = mapped_column(Float, nullable=True)
+    tmax_next_7d: Mapped[float | None] = mapped_column(Float, nullable=True)   # hottest day
+    rh_next_7d: Mapped[float | None] = mapped_column(Float, nullable=True)     # mean RH
+    obs_source: Mapped[str] = mapped_column(String(32), default="")
+
+
+class ObsUnitRain(Base):
+    """Season-to-date observed daily unit rainfall (IMD, else bias-adjusted Open-Meteo)."""
+
+    __tablename__ = "obs_unit_rain"
+
+    unit_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    date: Mapped[dt.date] = mapped_column(Date, primary_key=True)
+    rain_mm: Mapped[float | None] = mapped_column(Float, nullable=True)
+    source: Mapped[str] = mapped_column(String(16))                       # imd / om_adj
+
+
+class LiveVerification(Base):
+    """A live forecast scored against what the observed rain did, once its window closed.
+
+    Only the Monday runs are scored (config/live.yaml storage.keep_weekday), per unit, so a
+    season stays near 50 MB; the Accuracy page aggregates to district and state.
+    """
+
+    __tablename__ = "live_verification"
+
+    run_id: Mapped[int] = mapped_column(ForeignKey("live_runs.id", ondelete="CASCADE"),
+                                        primary_key=True)
+    unit_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    hazard: Mapped[str] = mapped_column(String(16), primary_key=True)
+    horizon: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_date: Mapped[dt.date] = mapped_column(Date, index=True)
+    state: Mapped[str] = mapped_column(String(128), index=True)
+    tier: Mapped[str] = mapped_column(String(16), index=True)
+    p_blend: Mapped[int | None] = mapped_column(Integer, nullable=True)   # per mille
+    p_ml: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    p_ec46: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    p_clim: Mapped[int | None] = mapped_column(Integer, nullable=True)    # base rate
+    outcome: Mapped[bool] = mapped_column(Boolean)
+    verified_utc: Mapped[dt.datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
 class AuditLog(Base):
     __tablename__ = "audit_log"
 

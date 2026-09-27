@@ -34,6 +34,13 @@ UNIT_RAIN_PARQUET = DATA_PROCESSED / "unit_rain.parquet"
 INDICES_PARQUET = DATA_PROCESSED / "indices.parquet"
 SOURCES_MD = ROOT / "data" / "SOURCES.md"
 
+# National (all-India) outputs. Kept beside the 5-state files so the deployed pilot
+# pipeline keeps working until the national models replace it (Stage 2).
+UNITS_INDIA_GPKG = DATA_PROCESSED / "units_india.gpkg"
+UNIT_ELEVATION_PARQUET = DATA_PROCESSED / "unit_elevation.parquet"
+WEIGHTS_INDIA_NPZ = DATA_PROCESSED / "weights_india.npz"
+UNIT_RAIN_INDIA_PARQUET = DATA_PROCESSED / "unit_rain_india.parquet"
+
 # --- IMD 0.25 deg gridded rainfall geometry ----------------------------------
 # From imdlib.core (verified 2026-09-26): the binary .grd files are a fixed
 # 129 x 135 float32 grid. Do not change these without re-reading imdlib.core.

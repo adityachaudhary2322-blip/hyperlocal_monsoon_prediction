@@ -120,12 +120,13 @@ district level with HQ"), unzip it into `data/raw/official_boundary/`, and rerun
 (`data/raw/boundary_mirror/SOI_{States,Districts}.parquet`, release tags `admin/states`
 and `admin/districts`) and the map says "Boundaries indicative, not official".
 
-**GitHub Actions.** `.github/workflows/weather.yml` (every 3 h) and `weather-grid.yml`
-(every 6 h) keep the public map current while the laptop is off. Add one repository
-secret, **`DATABASE_URL_CLOUD`** (Settings → Secrets and variables → Actions); the jobs
-read it by name through `--db-url-env`. They install only `requirements-weather.txt`.
-Open-Meteo budget: ~8,080 calls/day of the free 10,000 (non-commercial use; data CC BY 4.0,
-credited in the footer).
+**GitHub Actions.** `.github/workflows/live.yml` (daily, 04:30 UTC: EC46 + IMD +
+short-range for all of India, and the national weather layer) and `weather-grid.yml`
+(every 6 h, animations) keep the public site current while the laptop is off. Add one
+repository secret, **`DATABASE_URL_CLOUD`** (Settings → Secrets and variables → Actions);
+the jobs read it by name through `--db-url-env` and install only
+`requirements-live.txt` / `requirements-weather.txt`. Open-Meteo budget: ~7,950 calls/day
+of the free 10,000 (non-commercial use; data CC BY 4.0, credited in the footer).
 
 **Partner logo.** `app/static/partners/` is empty on purpose. The footer shows a partner
 logo only if a file named `moes-logo.png` is placed there by hand.
@@ -267,3 +268,15 @@ front matter above). It installs `requirements.txt`, adds `libgomp1` for LightGB
 points `HF_HOME`/`MPLCONFIGDIR` at `$HOME` because only `$HOME` and `/tmp` are
 writable there. `scripts/upload_models.py` and `src/artifacts.py` are the model-repo
 path that target uses instead of committed assets.
+
+## National live forecast (daily, GitHub Actions)
+
+- `.github/workflows/live.yml` runs `python -m src.live.run` then `python -m src.live.verify`
+  daily at 04:30 UTC, installing only `requirements-live.txt`. It needs the repository
+  secret `DATABASE_URL_CLOUD` (the Neon connection string - never paste it on a command line).
+- Local dry run: `python -m src.live.run --dry-run --cache`.
+- Rebuild inputs (laptop): `python -m src.build_units --national`,
+  `python -m src.build_national_rain`, `python -m src.build_crop_calendar`,
+  `python -m src.build_crops --from-calendar`, `python scripts/build_live_assets.py`,
+  `python scripts/build_public_map_assets.py` (SoI sub-districts + LGD block search index).
+- The national ML model (Stage 2) is "coming soon"; until then the live blend is EC46 only.

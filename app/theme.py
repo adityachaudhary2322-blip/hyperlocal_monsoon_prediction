@@ -167,6 +167,15 @@ html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
 .stApp a { color: var(--mo-primary); text-underline-offset: 2px; }
 hr { border-color: var(--mo-line) !important; }
 .mo-prose { max-width: 72ch; }
+.mo-tier { display: inline-block; font-size: 12.5px; font-weight: 600; line-height: 1.2; padding: 2px 8px;
+  border-radius: 999px; border: 1px solid var(--mo-line-strong); color: var(--mo-ink); white-space: nowrap; }
+.mo-tier-validated { border-color: var(--mo-accent); color: var(--mo-accent-ink) !important; }
+.mo-tier-experimental { border-style: dashed; color: var(--mo-muted) !important; }
+.mo-tier-low { color: var(--mo-risk-med-ink) !important; border-color: var(--mo-risk-med-ink); }
+.mo-card-line { margin: 0 0 8px; line-height: 1.5; }
+.mo-crop-row { border-left: 4px solid var(--mo-line-strong); padding-left: 10px; margin-bottom: 10px; }
+.mo-crop-row p { margin: 2px 0; }
+.mo-unit-title { margin: .5rem 0 0; }
 .mo-lede { font-size: 1.0625rem; line-height: 1.6; color: var(--mo-ink); }
 .mo-sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap; }
@@ -269,17 +278,26 @@ hr { border-color: var(--mo-line) !important; }
 .st-key-mo_coverage button p { color: var(--mo-accent-ink) !important; font-weight: 600; }
 .st-key-mo_subnav { border-bottom: 1px solid var(--mo-line); padding-bottom: 4px; margin-bottom: 8px; }
 .st-key-mo_menu { display: none; }
+.st-key-mo_mtabs { display: none !important; }
+.st-key-mo_lang [data-testid="stButtonGroup"] button { min-height: 32px; padding: 0 10px; }
 @media (max-width: 720px) {
   .st-key-mo_links { display: none !important; }
   .st-key-mo_menu { display: block; }
   .mo-brand .mo-app { display: none; }
   .st-key-mo_coverage { display: none !important; }   /* the coverage strip says it */
+  .st-key-mo_mtabs { display: flex !important; flex-wrap: nowrap !important; overflow-x: auto;
+    border-bottom: 1px solid var(--mo-line); padding-bottom: 4px; margin-bottom: 6px; }
+  .st-key-mo_mtabs [data-testid="stPageLink"] { flex: none; }
+  .st-key-mo_mtabs [data-testid="stPageLink"] a { white-space: nowrap; }
   /* Icon-only Menu button on phones; the word stays for screen readers. */
   .st-key-mo_menu button [data-testid="stMarkdownContainer"] { position: absolute; width: 1px;
     height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .st-key-mo_topbar { flex-wrap: nowrap !important; gap: 8px !important; }
   .st-key-mo_topbar > div:has(> .st-key-mo_links),
+  .st-key-mo_topbar > div:has(> .st-key-mo_menu),
   .st-key-mo_topbar > div:has(> .st-key-mo_coverage) { display: none !important; }
+  .st-key-mo_menu { display: none !important; }          /* the tab row replaces it */
+  .st-key-mo_lang [data-testid="stButtonGroup"] button { padding: 0 7px; min-width: 0; }
   .mo-brand .mo-word { font-size: 1.0625rem; letter-spacing: .06em; }
 }
 
@@ -406,9 +424,10 @@ def top_bar(pages: dict, user=None) -> None:
                 f"aria-label='VRRTANTA Monsoon outlook, home'>{brand_mark(30)}"
                 f"<span class='mo-word'>VRRTANTA</span>"
                 f"<span class='mo-app'>Monsoon outlook</span></a>", width="content")
-        with st.popover("5 states covered", key="mo_coverage",
-                        help="Which states have monsoon forecasts"):
-            st.markdown(COVERAGE_TEXT)
+        from app.i18n import LANGS, t
+
+        with st.popover(t("coverage_badge"), key="mo_coverage"):
+            st.markdown(t("coverage"))
         st.space("stretch")
 
         with st.container(key="mo_links", horizontal=True, gap="small",
@@ -418,14 +437,35 @@ def top_bar(pages: dict, user=None) -> None:
             with st.popover("Menu", icon=":material/menu:"):
                 _links(pages, user, stacked=True)
 
-        st.toggle(":material/dark_mode: Dark mode", key="dark")
+        if "lang" not in st.session_state:
+            st.session_state["lang"] = "en"
+        with st.container(key="mo_lang", width="content"):
+            short = {"en": "EN", "hi": "हिं", "mr": "मरा"}
+            st.segmented_control(t("lang_label"), list(LANGS), format_func=short.get,
+                                 key="lang", label_visibility="collapsed", required=True,
+                                 help=" / ".join(LANGS.values()))
+        st.toggle(f":material/dark_mode: {t('dark_mode')}", key="dark")
+    # Phones: the four tabs as a scrollable row under the bar (the approved wireframe).
+    with st.container(key="mo_mtabs", horizontal=True, gap="small"):
+        st.page_link(pages["home"], label=t("tab_map"))
+        st.page_link(pages["outlook"], label=t("tab_30"))
+        st.page_link(pages["accuracy"], label=t("tab_accuracy"))
+        st.page_link(pages["about"], label=t("tab_about"))
+        if user is None:
+            st.page_link(pages["signin"], label=t("sign_in"))
+        else:
+            st.page_link(pages["overview"], label="Officer portal")
 
 
 def _links(pages: dict, user, stacked: bool = False) -> None:
-    st.page_link(pages["home"], label="Home")
-    st.page_link(pages["about"], label="About")
+    from app.i18n import t
+
+    st.page_link(pages["home"], label=t("tab_map"))
+    st.page_link(pages["outlook"], label=t("tab_30"))
+    st.page_link(pages["accuracy"], label=t("tab_accuracy"))
+    st.page_link(pages["about"], label=t("tab_about"))
     if user is None:
-        st.page_link(pages["signin"], label="Sign in (officers)",
+        st.page_link(pages["signin"], label=t("sign_in"),
                      icon=":material/login:")
     else:
         st.page_link(pages["overview"], label="Officer portal",
@@ -452,6 +492,9 @@ def officer_subnav(pages: dict, user) -> None:
 
 
 def footer(extra: str = "") -> None:
+    from app.i18n import t
+
+    disclaimer = t("disclaimer")
     """Disclaimer, data credits, the VRRTANTA credit and the hackathon credit line.
 
     The partner slot shows app/static/partners/moes-logo.png only if someone has put
@@ -464,7 +507,7 @@ def footer(extra: str = "") -> None:
     st.html(
         # A div, not <footer>: the public-page CSS hides Streamlit's own <footer>.
         "<div class='mo-footer' role='contentinfo'>"
-        f"<p class='mo-prose'><strong>{DISCLAIMER}</strong></p>"
+        f"<p class='mo-prose'><strong>{disclaimer}</strong></p>"
         + (f"<p class='mo-prose'>{extra}</p>" if extra else "")
         + "<div class='mo-footer-row'>"
         f"<span class='mo-built'>{brand_mark(20)}Built by <strong>VRRTANTA</strong></span>"

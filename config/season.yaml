@@ -1,0 +1,26 @@
+# Which hazards the live engine forecasts and the site shows, by date of issue.
+# Month-day, inclusive. Outside both windows the engine still runs the month outlook
+# and weather, but no hazards.
+seasons:
+  monsoon:
+    from: "05-01"
+    to: "09-30"
+    hazards: [onset, dry, heavy]
+  post_monsoon:
+    from: "10-01"
+    to: "11-30"
+    hazards: [withdrawal, late_heavy, rabi_moisture]
+
+# A hazard can stop earlier than its season: after mid-August an onset forecast is no
+# longer useful, and where the strict onset rule never confirmed an onset (a patchy
+# season) it would wrongly read as "the monsoon has not arrived yet".
+hazard_until:
+  onset: "08-15"
+
+labels:
+  onset: Monsoon onset
+  dry: Dry spell
+  heavy: Heavy rain
+  withdrawal: Monsoon withdrawal
+  late_heavy: Heavy rain at harvest
+  rabi_moisture: Too dry for rabi sowing

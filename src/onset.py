@@ -41,17 +41,18 @@ class OnsetConfig:
         )
 
 
-def onset_config(zone_id: str | None = None, state: str | None = None) -> OnsetConfig:
-    """Resolve the onset rule for a zone, falling back to state then defaults.
+def onset_config(zone_id: str | None = None, state: str | None = None,
+                 region: str | None = None) -> OnsetConfig:
+    """Resolve the onset rule: zone, then agro-climatic region, then state, then defaults.
 
-    An unzoned district therefore gets the documented default rather than a guess.
+    Layers are applied least-specific first, so a zone override beats a region default,
+    and an unzoned district still gets a documented rule rather than a guess.
     """
     cfg = load_config("onset")
     resolved = dict(cfg["defaults"])
-    if state and state in (cfg.get("states") or {}):
-        resolved.update(cfg["states"][state] or {})
-    if zone_id and zone_id in (cfg.get("zones") or {}):
-        resolved.update(cfg["zones"][zone_id] or {})
+    for key, value in (("states", state), ("regions", region), ("zones", zone_id)):
+        if value and value in (cfg.get(key) or {}):
+            resolved.update(cfg[key][value] or {})
     return OnsetConfig(**resolved)
 
 

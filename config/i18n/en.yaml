@@ -1,0 +1,123 @@
+# Public UI strings, English. hi.yaml and mr.yaml carry the same keys (tests check).
+meta: {language: English, review: source}
+
+tab_map: Map
+tab_30: Next 30 days
+tab_accuracy: Accuracy
+tab_about: About
+lang_label: Language
+coverage: "Validated forecasts for Uttar Pradesh, Delhi, Bihar, Madhya Pradesh and Maharashtra. Other states are experimental while we verify crop guidance."
+coverage_badge: 5 states validated
+dark_mode: Dark mode
+sign_in: Sign in (officers)
+
+search_placeholder: Find your block or district
+use_location: Use my location
+location_denied: "Location not available. Search by name instead."
+map_options: Map options
+weather_layer: Weather layer
+monsoon_risk: Monsoon risk
+looking_ahead: Looking ahead
+animations: Animations
+week_n: "{n} week"
+weeks_n: "{n} weeks"
+
+tier_validated: Validated
+tier_experimental: Experimental
+tier_low: Low confidence
+tier_help_validated: "Forecasts checked against past seasons in this state."
+tier_help_experimental: "Same method, not yet checked for this state."
+tier_help_low: "The method is known to be weak here (hills, or the northeast monsoon)."
+
+level_low: Low
+level_medium: Medium
+level_high: High
+level_none: No forecast
+
+hazard_onset: Monsoon onset
+hazard_dry: Dry spell
+hazard_heavy: Heavy rain
+hazard_withdrawal: Monsoon withdrawal
+hazard_late_heavy: Heavy rain at harvest
+hazard_rabi_moisture: Too dry for rabi sowing
+
+sentence_onset: "{p} chance the monsoon arrives within {span}"
+sentence_dry: "{p} chance of a dry spell of 10 days or more starting within {span}"
+sentence_heavy: "{p} chance of a day with heavy rain (65 mm or more) within {span}"
+sentence_withdrawal: "{p} chance the monsoon withdraws within {span}"
+sentence_late_heavy: "{p} chance of heavy rain while crops are being harvested, within {span}"
+sentence_rabi_moisture: "{p} chance that rain stays too short for rabi sowing over {span}"
+span_1: the next week
+span_n: "the next {n} weeks"
+
+updated: "Updated {time}"
+data_delayed: "Data delayed: some inputs are more than 3 days old"
+weather_now: Weather now and recent
+rain_last_7: "Rain in the last 7 days"
+rain_last_14: "Rain in the last 14 days"
+normal: normal
+temperature_now: Temperature now
+humidity_now: Humidity now
+soil_moisture: Topsoil moisture
+next_30: Next 30 days
+week_card: "Week {n}"
+chart_title: "Rain per week: likely range, most likely amount and normal"
+chart_range: likely range (1 in 10 to 9 in 10)
+chart_median: most likely
+chart_normal: normal (1990-2018)
+chart_today: Today
+outlook_above: "Week {n} looks wetter than normal ({p} chance)."
+outlook_below: "Week {n} looks drier than normal ({p} chance)."
+outlook_near: "Week {n} looks close to normal."
+outlook_month: "Over the next 4 weeks: {text}"
+crops_here: Crops here
+crops_source_district: "Main crops from district statistics."
+crops_source_state: "Crops grown in this state (district statistics not yet loaded)."
+advisory: Approved advisory
+no_advisory: No approved advisory for this area right now.
+machine_translated: machine translated
+source_line: "Hybrid forecast: our ML model + ECMWF EC46 ensemble, using IMD and Open-Meteo data."
+ml_coming_soon: "Our national ML model is coming soon; today's chances come from the EC46 ensemble."
+share_whatsapp: Share on WhatsApp
+share_text: "Monsoon outlook for {name}, {district}: {url}"
+no_forecast_unit: "No forecast is available for this area yet."
+pick_area: "Pick an area on the map or search for your block or district."
+empty_no_run: "The first daily forecast has not run yet. Check back after 10:00 IST."
+error_generic: "Something went wrong loading this. Refresh the page; if it continues, try again later."
+summary_heading: "{hazard}, {span}"
+summary_line: "{state}: {n} areas at high risk"
+summary_none: "{state}: no area at high risk"
+other_states: Other states (experimental)
+disclaimer: "Experimental prototype. Always follow official IMD and state agriculture department advisories."
+unnamed_area: Unnamed area
+loading: Loading…
+forecast_area: "Forecast area: {name}"
+close: Close
+legend: Legend
+hide: Hide
+show: Show
+no_match: No match
+kind_district: District
+kind_subdistrict: Sub-district
+kind_block: Block
+tier_legend: Confidence
+district_max_note: Districts show their highest sub-district risk.
+week_long: "Week {n} (next {days} days)"
+rain_forecast_btn: Rain forecast
+monsoon_advance_btn: Monsoon advance
+wind_flow: Wind flow
+wx_rain24: Rain 24 h
+wx_rain7: Rain 7 days
+wx_temp: Temperature
+wx_title_rain24: Rain in the next 24 hours (mm)
+wx_title_rain7: Rain in the next 7 days (mm)
+wx_title_temp: Temperature now (°C)
+band_high: High · over 60%
+band_medium: Medium · 30–60%
+band_low: Low · under 30%
+band_none: No forecast yet
+tier_solid: Validated (solid)
+tier_light: Experimental (lighter)
+tier_hatched: Low confidence (hatched)
+boundaries_note: Boundaries indicative, not official
+next_label: "next {span}"

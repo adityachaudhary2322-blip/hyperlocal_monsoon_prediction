@@ -2,35 +2,222 @@
   "official": false,
   "source": "Survey of India layers via the india-geodata mirror (github.com/yashveeeeeeer/india-geodata)",
   "file": "data/raw/boundary_mirror/SOI_States.parquet, data/raw/boundary_mirror/SOI_Districts.parquet",
-  "built_utc": "2026-09-27T07:10Z",
+  "built_utc": "2026-09-27T12:49Z",
   "covered": {
     "Uttar Pradesh": {
       "key": "uttar_pradesh",
-      "units": 214,
+      "state": "Uttar Pradesh",
+      "units": 314,
       "districts": 75
     },
     "NCT of Delhi": {
       "key": "delhi",
-      "units": 1,
-      "districts": 1
+      "state": "Delhi",
+      "units": 35,
+      "districts": 11
     },
     "Bihar": {
       "key": "bihar",
-      "units": 53,
+      "state": "Bihar",
+      "units": 101,
       "districts": 38
     },
     "Madhya Pradesh": {
       "key": "madhya_pradesh",
-      "units": 166,
-      "districts": 51
+      "state": "Madhya Pradesh",
+      "units": 273,
+      "districts": 53
     },
     "Maharashtra": {
       "key": "maharashtra",
-      "units": 305,
+      "state": "Maharashtra",
+      "units": 358,
       "districts": 36
     }
   },
-  "subdistrict_source": "GADM 4.1 level 3 (not blocks; see CLAUDE.md §5)",
+  "states": {
+    "andaman_nicobar": {
+      "state": "Andaman & Nicobar",
+      "units": 9,
+      "districts": 3
+    },
+    "andhra_pradesh": {
+      "state": "Andhra Pradesh",
+      "units": 663,
+      "districts": 13
+    },
+    "arunachal_pradesh": {
+      "state": "Arunachal Pradesh",
+      "units": 25,
+      "districts": 25
+    },
+    "assam": {
+      "state": "Assam",
+      "units": 158,
+      "districts": 33
+    },
+    "bihar": {
+      "state": "Bihar",
+      "units": 101,
+      "districts": 38
+    },
+    "chandigarh": {
+      "state": "Chandigarh",
+      "units": 1,
+      "districts": 1
+    },
+    "chhattisgarh": {
+      "state": "Chhattisgarh",
+      "units": 147,
+      "districts": 28
+    },
+    "dadra_nagar_haveli_daman_diu": {
+      "state": "Dadra & Nagar Haveli & Daman & Diu",
+      "units": 3,
+      "districts": 3
+    },
+    "delhi": {
+      "state": "Delhi",
+      "units": 35,
+      "districts": 11
+    },
+    "goa": {
+      "state": "Goa",
+      "units": 11,
+      "districts": 2
+    },
+    "gujarat": {
+      "state": "Gujarat",
+      "units": 253,
+      "districts": 34
+    },
+    "haryana": {
+      "state": "Haryana",
+      "units": 77,
+      "districts": 22
+    },
+    "himachal_pradesh": {
+      "state": "Himachal Pradesh",
+      "units": 112,
+      "districts": 12
+    },
+    "jammu_and_kashmir": {
+      "state": "Jammu and Kashmir",
+      "units": 22,
+      "districts": 22
+    },
+    "jharkhand": {
+      "state": "Jharkhand",
+      "units": 274,
+      "districts": 24
+    },
+    "karnataka": {
+      "state": "Karnataka",
+      "units": 177,
+      "districts": 30
+    },
+    "kerala": {
+      "state": "Kerala",
+      "units": 75,
+      "districts": 14
+    },
+    "ladakh": {
+      "state": "Ladakh",
+      "units": 2,
+      "districts": 2
+    },
+    "lakshadweep": {
+      "state": "Lakshadweep",
+      "units": 1,
+      "districts": 1
+    },
+    "madhya_pradesh": {
+      "state": "Madhya Pradesh",
+      "units": 273,
+      "districts": 53
+    },
+    "maharashtra": {
+      "state": "Maharashtra",
+      "units": 358,
+      "districts": 36
+    },
+    "manipur": {
+      "state": "Manipur",
+      "units": 30,
+      "districts": 16
+    },
+    "meghalaya": {
+      "state": "Meghalaya",
+      "units": 11,
+      "districts": 11
+    },
+    "mizoram": {
+      "state": "Mizoram",
+      "units": 22,
+      "districts": 8
+    },
+    "nagaland": {
+      "state": "Nagaland",
+      "units": 23,
+      "districts": 11
+    },
+    "odisha": {
+      "state": "Odisha",
+      "units": 182,
+      "districts": 30
+    },
+    "puducherry": {
+      "state": "Puducherry",
+      "units": 8,
+      "districts": 4
+    },
+    "punjab": {
+      "state": "Punjab",
+      "units": 78,
+      "districts": 22
+    },
+    "rajasthan": {
+      "state": "Rajasthan",
+      "units": 316,
+      "districts": 34
+    },
+    "sikkim": {
+      "state": "Sikkim",
+      "units": 9,
+      "districts": 4
+    },
+    "tamil_nadu": {
+      "state": "Tamil Nadu",
+      "units": 309,
+      "districts": 38
+    },
+    "telangana": {
+      "state": "Telangana",
+      "units": 441,
+      "districts": 33
+    },
+    "tripura": {
+      "state": "Tripura",
+      "units": 23,
+      "districts": 8
+    },
+    "uttar_pradesh": {
+      "state": "Uttar Pradesh",
+      "units": 314,
+      "districts": 75
+    },
+    "uttarakhand": {
+      "state": "Uttarakhand",
+      "units": 79,
+      "districts": 13
+    },
+    "west_bengal": {
+      "state": "West Bengal",
+      "units": 94,
+      "districts": 23
+    }
+  },
+  "subdistrict_source": "Survey of India sub-districts (india-geodata mirror, CC0); forecast values from the GADM 4.1 level-3 unit covering most of each",
   "tolerances_m": {
     "states": 800.0,
     "districts": 400.0,

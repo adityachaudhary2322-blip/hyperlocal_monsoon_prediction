@@ -696,14 +696,31 @@ def test_runtime_grid_files_are_not_committed():
     assert "app/static/wind.json" in ignore and "app/static/rain_forecast.json" in ignore
 
 
-@pytest.mark.parametrize("workflow", ["weather.yml", "weather-grid.yml"])
-def test_workflows_read_the_database_url_by_name_only(workflow):
+@pytest.mark.parametrize("workflow,reqs", [("live.yml", "requirements-live.txt"),
+                                           ("weather-grid.yml", "requirements-weather.txt")])
+def test_workflows_read_the_database_url_by_name_only(workflow, reqs):
     text = (ROOT / ".github" / "workflows" / workflow).read_text(encoding="utf-8")
     front = yaml.safe_load(text)
     assert front.get("permissions", {}).get("contents") == "read"
     assert "--db-url-env DATABASE_URL_CLOUD" in text
-    assert "requirements-weather.txt" in text
+    assert reqs in text, f"{workflow} should install only {reqs}"
+    assert " requirements.txt" not in text, "a job must not install the website's file"
     assert "postgres" not in text.lower(), "a connection string in the workflow"
+    assert "git push" not in text and "git commit" not in text, "workflows never commit"
+
+
+def test_live_job_pins_match_the_site_and_laptop():
+    live = _pins(ROOT / "requirements-live.txt")
+    known = {**_pins(DEV_REQS), **_pins(SITE_REQS)}
+    drift = {k: (v, known.get(k)) for k, v in live.items() if known.get(k) != v}
+    assert live and not drift, f"requirements-live.txt drifts: {drift}"
+    for heavy in ("streamlit", "geopandas", "torch", "xarray", "lightgbm"):
+        assert heavy not in live, f"{heavy} does not belong in the live job"
+
+
+def test_the_three_hourly_weather_job_is_retired():
+    """Its 5,872 calls/day would push Open-Meteo use past 10,000 with EC46 running."""
+    assert not (ROOT / ".github" / "workflows" / "weather.yml").exists()
 
 
 def test_docker_image_carries_the_streamlit_config():

@@ -43,6 +43,8 @@ user = current_user()
 
 pages = {
     "home": st.Page("pages/public/home.py", title="Monsoon outlook", default=True),
+    "outlook": st.Page("pages/public/outlook.py", title="Next 30 days", url_path="next-30-days"),
+    "accuracy": st.Page("pages/public/accuracy.py", title="Accuracy", url_path="accuracy"),
     "about": st.Page("pages/public/about.py", title="About", url_path="about"),
     "signin": st.Page("pages/signin.py", title="Officer sign in", url_path="sign-in"),
     "overview": st.Page("pages/overview.py", title="Overview",
@@ -58,7 +60,7 @@ pages = {
     "models": st.Page("pages/models.py", title="Models & settings",
                       icon=":material/tune:", url_path="models"),
 }
-PUBLIC = ("home", "about")
+PUBLIC = ("home", "outlook", "accuracy", "about")
 OFFICER = ("overview", "risk_map", "approvals", "custom_alert", "outbox", "models")
 
 registered = [pages[k] for k in PUBLIC]

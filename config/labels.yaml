@@ -1,0 +1,27 @@
+# Event definitions shared by the live engine (EC46 members) and model training
+# (src/labels.py). One definition, two users: the ML and EC46 probabilities that get
+# blended are probabilities of exactly the same event.
+
+dry:
+  run_days: 10          # a dry spell is at least this many consecutive days ...
+  dry_mm: 2.5           # ... each below this, and it must START inside the horizon
+
+heavy:
+  day_mm: 64.5          # IMD "heavy rain" threshold for a day
+
+late_heavy:
+  day_mm: 64.5          # heavy rain on a day inside a main crop's harvest window
+  season: kharif        # whose harvest windows count (kharif harvest = Sep-Dec)
+
+rabi_moisture:
+  # Risk that the soil is too dry for rabi sowing: rain from season_start to the end of
+  # the horizon (observed so far + forecast) falls short of `fraction_of_normal` of the
+  # 1990-2018 normal for the same span. Normal comes from app/assets/live/climatology.npz.
+  season_start: "06-01"
+  fraction_of_normal: 0.8
+
+onset:
+  # EC46 runs 46 days. Onset's false-start check looks 30 days past the trigger, which
+  # a late trigger cannot have inside 46 days; for forecasts the check uses the days
+  # available (at least this many), and the run reports that it did.
+  min_confirm_days: 14
