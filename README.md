@@ -163,6 +163,32 @@ The committed and locally trained models were verified to agree **bit for bit** 
 probabilities on 2024-06-19, maximum difference 0.0 — so hosting does not change a
 number. `tests/test_deployment.py` re-checks that.
 
+### Managing accounts
+
+`scripts/manage_users.py` works against **DATABASE_URL_CLOUD** - the deployed site's
+database, since that is where the accounts people sign in with live.
+
+```powershell
+.venv\Scripts\python.exe scripts\manage_users.py list
+.venv\Scripts\python.exe scripts\manage_users.py create officer_latur --role officer --states Maharashtra
+.venv\Scripts\python.exe scripts\manage_users.py reset-password vrrtanta
+.venv\Scripts\python.exe scripts\manage_users.py deactivate admin
+```
+
+- Passwords are read with `getpass`, so they do not echo and never reach argv, the
+  shell history or the process list. There is deliberately no `--password` flag;
+  `--password-env NAME` is the non-interactive route.
+- `list` shows username, role, active and scope. It never reads or prints a hash.
+- The connection string is never printed - only the variable it came from - and a driver
+  error is scrubbed of its password, user and host first.
+- Deactivating or demoting the **last active admin** is refused. The only way back in
+  would be `python -m src.db.init --reset`, which wipes the forecasts too.
+- Every change lands in `audit_log`.
+
+`ADMIN_USERNAME` and `ADMIN_PASSWORD` in `.env` set the admin account that
+`python -m src.db.init` seeds, so a `--reset` does not resurrect a default `admin`
+after the real administrator has been renamed.
+
 ### Writing full Chronos-2 forecasts from the laptop
 
 The website forecasts with LightGBM. To push a Chronos-2 run into the same cloud

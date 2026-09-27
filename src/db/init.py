@@ -120,13 +120,18 @@ def seed_users(session, states: list[str]) -> list[tuple[str, str, str, str]]:
     session.query(User).delete()
     created = []
 
+    # Both are configurable so a --reset does not resurrect a default `admin`
+    # account after the real administrator has been renamed. See
+    # scripts/manage_users.py for changing either without reseeding.
+    admin_username = env("ADMIN_USERNAME") or "admin"
     admin_password = env("ADMIN_PASSWORD") or generate_password()
     session.add(User(
-        username="admin", name="System Administrator",
-        email="admin@example.invalid", password_hash=hash_password(admin_password),
+        username=admin_username, name="System Administrator",
+        email=f"{admin_username}@example.invalid",
+        password_hash=hash_password(admin_password),
         role="admin", assigned_states="",
     ))
-    created.append(("admin", admin_password, "admin", "all states"))
+    created.append((admin_username, admin_password, "admin", "all states"))
 
     for state in states:
         # "officer_madhya_pradesh" - predictable, and no spaces to fat-finger.
@@ -202,8 +207,10 @@ def main() -> int:
     print(f"    {'username':<28}{'password':<16}{'role':<10}scope")
     for username, password, role, scope in accounts:
         print(f"    {username:<28}{password:<16}{role:<10}{scope}")
-    if env("ADMIN_PASSWORD"):
-        print("    (admin password came from ADMIN_PASSWORD in .env)")
+    if env("ADMIN_PASSWORD") or env("ADMIN_USERNAME"):
+        which = [name for name in ("ADMIN_USERNAME", "ADMIN_PASSWORD") if env(name)]
+        print(f"    (admin {' and '.join(w.split('_')[1].lower() for w in which)} "
+              f"came from {' / '.join(which)} in .env)")
 
     summarize(
         "db.init",
